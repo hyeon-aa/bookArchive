@@ -7,3 +7,12 @@ Content-Type: application/json
   "password": "1234",
   "nickname": "테스터"
 }
+
+### 로그인 요청
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "1234"
+}
