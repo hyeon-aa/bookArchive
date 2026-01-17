@@ -19,4 +19,34 @@ model User {
   password  String
   name      String?
   createdAt DateTime @default(now())
+  bookshelf Bookshelf[]
+}
+
+enum BookStatus {
+  BEFORE
+  READING
+  DONE
+}
+
+model Book {
+  id        Int         @id @default(autoincrement())
+  isbn      String      @unique
+  title     String
+  author    String
+  imageUrl  String
+  createdAt DateTime    @default(now())
+  bookshelf Bookshelf[]
+}
+
+model Bookshelf {
+  id        Int        @id @default(autoincrement())
+  userId    Int
+  bookId    Int
+  status    BookStatus
+  createdAt DateTime   @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@unique([userId, bookId])
 }
