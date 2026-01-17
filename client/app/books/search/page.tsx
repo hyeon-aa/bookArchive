@@ -2,6 +2,9 @@
 
 import { bookSearchApi } from "@/feature/books/api";
 import type { BookSearch } from "@/feature/books/type";
+import { bookshelfApi } from "@/feature/bookshelf/api";
+import { BookStatusModal } from "@/feature/bookshelf/components/BookStatusModal";
+import { BookStatus } from "@/feature/bookshelf/type";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -9,6 +12,9 @@ export default function BookSearchPage() {
   const [query, setQuery] = useState("");
   const [books, setBooks] = useState<BookSearch[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const [selectedBook, setSelectedBook] = useState<BookSearch | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -21,6 +27,32 @@ export default function BookSearchPage() {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenModal = (book: BookSearch) => {
+    setSelectedBook(book);
+    setModalOpen(true);
+  };
+
+  const handleSelectStatus = async (status: BookStatus) => {
+    if (!selectedBook) return;
+
+    try {
+      await bookshelfApi.addBook({
+        isbn: selectedBook.isbn,
+        title: selectedBook.title,
+        author: selectedBook.author,
+        imageUrl: selectedBook.imageUrl,
+        status,
+      });
+
+      alert("내 책장에 등록되었습니다 📚");
+    } catch (e) {
+      alert("등록 실패");
+    } finally {
+      setModalOpen(false);
+      setSelectedBook(null);
     }
   };
 
@@ -79,12 +111,23 @@ export default function BookSearchPage() {
                 <p className="text-sm text-gray-500">{book.author}</p>
               </div>
 
-              <button className="self-center px-4 py-2 text-sm rounded-md border border-[rgb(var(--primary-sage))] text-[rgb(var(--primary-sage))] hover:bg-[rgb(var(--accent-cream))]">
+              <button
+                onClick={() => handleOpenModal(book)}
+                className="self-center px-4 py-2 text-sm rounded-md border 
+    border-[rgb(var(--primary-sage))] 
+    text-[rgb(var(--primary-sage))] 
+    hover:bg-[rgb(var(--accent-cream))]"
+              >
                 등록하기
               </button>
             </li>
           ))}
         </ul>
+        <BookStatusModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onSelect={handleSelectStatus}
+        />
       </div>
     </div>
   );
