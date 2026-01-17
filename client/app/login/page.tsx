@@ -1,7 +1,7 @@
 "use client";
 
-import { authApi } from "@/api/auth/auth";
-import { LoginForm } from "@/api/auth/type";
+import { authApi } from "@/feature/auth/api";
+import { LoginForm } from "@/feature/auth/type";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AuthLayout } from "../(auth)/AuthLayout";
