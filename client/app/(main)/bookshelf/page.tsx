@@ -30,9 +30,7 @@ export default function BookshelfPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-3xl mx-auto px-4 py-10">
-        <h1 className="text-2xl font-bold mb-6">📖 내 책장</h1>
-
+      <div className="max-w-3xl mx-auto px-4 py-5">
         {books.length === 0 ? (
           <div className="text-center text-gray-400 mt-20">
             아직 등록한 책이 없어요 📚
