@@ -3,14 +3,14 @@
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-rgb: 255, 255, 255;
-  --primary-coral: 244, 164, 96;
-  --secondary-peach: 255, 229, 180;
-  --accent-mint: 152, 216, 200;
+  --primary-sage: 124, 152, 133;
+  --secondary-sage-light: 166, 188, 175;
+  --accent-cream: 245, 240, 230;
 }
 
 @media (min-width: 481px) {
   :root {
-    --background-rgb: 254, 250, 246;
+    --background-rgb: 248, 249, 247;
   }
 }
 
