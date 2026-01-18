@@ -45,6 +45,14 @@ model Bookshelf {
   status    BookStatus
   createdAt DateTime   @default(now())
 
+  comment   String?    // 한줄평
+  emotion   String?    // 감정
+  startDate DateTime?  // 시작 날짜
+  endDate   DateTime?  // 완료 날짜
+
+  aiComment String?
+  aiTags    String[]
+
   user User @relation(fields: [userId], references: [id])
   book Book @relation(fields: [bookId], references: [id])
 
