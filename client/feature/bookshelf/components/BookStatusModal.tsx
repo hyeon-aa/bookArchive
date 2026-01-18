@@ -15,7 +15,6 @@ export function BookStatusModal({ open, onClose, onSelect }: Props) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="relative w-full max-w-sm bg-white rounded-2xl p-6 shadow-lg">
-        {/* 닫기 버튼 */}
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
@@ -26,7 +25,6 @@ export function BookStatusModal({ open, onClose, onSelect }: Props) {
 
         <h2 className="text-lg font-semibold mb-6 text-center">책 상태 선택</h2>
 
-        {/* 상태 버튼 */}
         <div className="flex gap-3">
           <button
             onClick={() => onSelect("BEFORE")}
