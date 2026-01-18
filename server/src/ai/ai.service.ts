@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import Groq from 'groq-sdk'; // npm install groq-sdk
-import { AITagRequestDto } from './\bai-request.dto';
+import { AITagRequestDto } from './ai-request.dto';
 import { AITagResponseDto } from './ai-response.dto';
 
 @Injectable()
