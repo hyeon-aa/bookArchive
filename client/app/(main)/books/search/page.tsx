@@ -48,7 +48,7 @@ export default function BookSearchPage() {
       });
 
       alert("내 책장에 등록되었습니다 📚");
-    } catch (e) {
+    } catch {
       alert("등록 실패");
     } finally {
       setModalOpen(false);
