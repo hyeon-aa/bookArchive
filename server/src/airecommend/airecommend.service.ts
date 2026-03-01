@@ -6,10 +6,25 @@ import {
   AiRecommendRequestDto,
   AITasteRecommendResponseDto,
   DailyQuoteResponseDto,
-  RecommendedBookDto,
 } from './dto/ai-recommend.dto';
 import { AIRecommendDraft } from './types/ai-recommend.type';
 import { BookItem } from './types/book-item.type';
+
+interface AIResponseBook {
+  title: string;
+  reason: string;
+}
+
+interface FinalRecommendedBook {
+  book: {
+    isbn: string;
+    title: string;
+    author: string;
+    imageUrl: string;
+    description: string;
+  };
+  reason: string;
+}
 
 @Injectable()
 export class AirecommendService {
@@ -61,11 +76,12 @@ export class AirecommendService {
       throw error;
     }
   }
-  /** 3. AI에게 내 책장을 기준으로 책 추천 받기 -> 내 취향에 맞는 책과 새로운 장르 */
+
   async getTasteRecommendations(
     userId: number,
   ): Promise<AITasteRecommendResponseDto> {
     try {
+      // 1. 내 서재 데이터 가져오기
       const myBooks = await this.BookShelfService.getMyBooks(userId);
 
       if (!myBooks || myBooks.length === 0) {
@@ -75,30 +91,57 @@ export class AirecommendService {
           challengeBooks: [],
         };
       }
+
+      // 2. 벡터 검색으로 유사한 책들 미리 가져오기 (RAG 방식)
+      const similarBooks = await this.BookShelfService.getSimilarBooks(
+        userId,
+        5,
+      );
+
+      // AI에게 전달할 형식으로 변환
       const formattedBooks = myBooks.map((item) => ({
         title: item.book.title,
         author: item.book.author,
         status: item.status || '읽기 전',
       }));
 
-      /** 1. AI 추천 초안 */
-      const aiResult =
-        await this.aiService.generateTasteBasedRecommendations(formattedBooks);
+      // 3. AI에게 추천 요청
+      const aiResult = await this.aiService.generateTasteBasedRecommendations(
+        formattedBooks,
+        similarBooks,
+      );
 
-      /** 2. 실제 BookItem으로 보정 */
       const resolveBooks = async (
-        books: { title: string; reason: string }[],
-      ): Promise<RecommendedBookDto[]> => {
-        const results: RecommendedBookDto[] = [];
+        books: any,
+      ): Promise<FinalRecommendedBook[]> => {
+        if (!books || !Array.isArray(books)) return [];
 
-        for (const book of books) {
-          const searchResult = await this.booksService.search(book.title);
+        const results: FinalRecommendedBook[] = [];
 
-          if (searchResult && searchResult.length > 0) {
-            results.push({
-              book: searchResult[0],
-              reason: book.reason,
-            });
+        for (const rawBook of books) {
+          const aiBook = rawBook as AIResponseBook;
+
+          try {
+            const searchResults = await this.booksService.search(aiBook.title);
+
+            if (searchResults && searchResults.length > 0) {
+              const realBook = searchResults[0];
+
+              results.push({
+                book: {
+                  isbn: realBook.isbn,
+                  title: realBook.title,
+                  author: realBook.author,
+                  imageUrl: realBook.imageUrl,
+                  description: realBook.description,
+                },
+                reason: aiBook.reason,
+              });
+            } else {
+              console.warn(`[필터링] 실존하지 않는 도서 제외: ${aiBook.title}`);
+            }
+          } catch (error) {
+            console.error(`네이버 검색 연동 중 오류: ${aiBook.title}`, error);
           }
         }
 
@@ -106,14 +149,15 @@ export class AirecommendService {
       };
 
       return {
-        tasteSummary: aiResult.tasteSummary,
-        familiarBooks: await resolveBooks(aiResult.familiarBooks),
-        challengeBooks: await resolveBooks(aiResult.challengeBooks),
+        tasteSummary:
+          aiResult?.tasteSummary || '당신의 독서 취향을 분석한 결과입니다.',
+        familiarBooks: await resolveBooks(aiResult?.familiarBooks),
+        challengeBooks: await resolveBooks(aiResult?.challengeBooks),
       };
     } catch (error) {
       console.error('[Taste Recommend Error]', error);
       return {
-        tasteSummary: '취향 분석 중 오류가 발생했습니다.',
+        tasteSummary: '취향 분석 도중 일시적인 오류가 발생했습니다.',
         familiarBooks: [],
         challengeBooks: [],
       };
