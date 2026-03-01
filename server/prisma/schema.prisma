@@ -34,6 +34,7 @@ model Book {
   title     String
   author    String
   imageUrl  String
+  description String
   createdAt DateTime    @default(now())
   bookshelf Bookshelf[]
 }
@@ -57,4 +58,12 @@ model Bookshelf {
   book Book @relation(fields: [bookId], references: [id])
 
   @@unique([userId, bookId])
+}
+
+model BookEmbedding {
+  id        Int    @id @default(autoincrement())
+  userId    Int
+  bookId    Int
+  embedding Unsupported("vector(3072)")
+  createdAt DateTime @default(now())
 }
