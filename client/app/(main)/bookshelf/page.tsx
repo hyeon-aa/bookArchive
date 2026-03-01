@@ -1,5 +1,6 @@
 "use client";
 
+import { EMOTION_EMOJIS } from "@/app/constants/emotion";
 import { bookshelfApi } from "@/feature/bookshelf/api";
 import { BookshelfItem } from "@/feature/bookshelf/components/BookshelfItem";
 import type { BookshelfItem as Item } from "@/feature/bookshelf/type";
@@ -7,19 +8,6 @@ import { LayoutGrid, List } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-const EMOTION_EMOJIS: Record<string, string> = {
-  힐링: "🌿",
-  열정: "🔥",
-  몰입: "🤔",
-  감동: "💧",
-  짜릿: "⚡",
-  위로: "🫂",
-  궁금: "🧐",
-  평온: "😌",
-  슬픔: "😢",
-  성장: "🌱",
-};
 
 export default function BookshelfPage() {
   const router = useRouter();

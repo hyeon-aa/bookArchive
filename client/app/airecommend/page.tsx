@@ -4,48 +4,7 @@ import { exploreApi } from "@/feature/explore/api";
 import { BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
-// 카테고리별 무드 데이터
-const MOOD_DATA = [
-  {
-    id: "rest",
-    label: "휴식/안정",
-    moods: [
-      "지친",
-      "무기력한",
-      "잔잔한",
-      "나른한",
-      "편안한",
-      "쉬어가고 싶은",
-      "차분해지고 싶은",
-    ],
-  },
-  {
-    id: "blue",
-    label: "불안/슬픔",
-    moods: ["심란한", "막막한", "예민한", "외로운", "공허한"],
-  },
-  {
-    id: "energy",
-    label: "활기/기쁨",
-    moods: ["설레는", "궁금한", "자신감 있는", "즐거운", "벅찬", "의욕적인"],
-  },
-  {
-    id: "mood",
-    label: "감성/추억",
-    moods: ["몽글몽글한", "아련한", "뭉클한", "센치한", "그리운"],
-  },
-  {
-    id: "drive",
-    label: "변화/동기",
-    moods: [
-      "다시 시작하고 싶은",
-      "자극이 필요한",
-      "동기부여가 필요한",
-      "변화가 필요한",
-    ],
-  },
-];
+import { MOOD_DATA } from "../constants/mood";
 
 export default function AIRecommendPage() {
   const [activeTab, setActiveTab] = useState(MOOD_DATA[0].id);
