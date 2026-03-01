@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { BooksModule } from './books/books.module';
 import { BookshelfModule } from './bookshelf/bookshelf.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { PrismaModule } from './prisma/prisma.module';
     BooksModule,
     BookshelfModule,
     AirecommendModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
