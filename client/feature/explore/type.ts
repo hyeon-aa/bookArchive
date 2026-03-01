@@ -3,6 +3,7 @@ export interface RecommendBookItem {
   title: string;
   author: string;
   imageUrl: string;
+  description: string;
 }
 
 export interface DailyQuote {
@@ -19,6 +20,7 @@ export interface RecommendedBook {
     author: string;
     imageUrl: string;
     isbn: string;
+    description: string;
   };
   reason: string;
 }

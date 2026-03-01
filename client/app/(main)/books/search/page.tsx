@@ -44,6 +44,7 @@ export default function BookSearchPage() {
         title: selectedBook.title,
         author: selectedBook.author,
         imageUrl: selectedBook.imageUrl,
+        description: selectedBook.description,
         status,
       });
 

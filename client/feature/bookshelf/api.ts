@@ -8,6 +8,7 @@ export const bookshelfApi = {
     title: string;
     author: string;
     imageUrl: string;
+    description: string;
     status: BookStatus;
   }) => {
     return apiFetch("/bookshelf", {

@@ -32,6 +32,7 @@ export function TasteRecommendation({
         author: book.author,
         imageUrl: book.imageUrl,
         status: "BEFORE" as BookStatus,
+        description: book.description,
       });
 
       alert(`${book.title}이(가) 내 책장에 담겼습니다 📚`);

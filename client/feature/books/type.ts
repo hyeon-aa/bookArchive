@@ -3,4 +3,5 @@ export interface BookSearch {
   title: string;
   author: string;
   imageUrl: string;
+  description: string;
 }

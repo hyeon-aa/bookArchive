@@ -17,5 +17,6 @@ export interface BookshelfItem {
     title: string;
     author: string;
     imageUrl: string;
+    description: string;
   };
 }
