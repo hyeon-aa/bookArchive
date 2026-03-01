@@ -227,6 +227,7 @@ export class aiService {
 
   async generateTasteBasedRecommendations(
     books: { title: string; author: string; status: string }[],
+    similarBooks: any[],
   ): Promise<AITasteRecommendResponseDto> {
     try {
       const completion = await this.groq.chat.completions.create({
@@ -234,32 +235,29 @@ export class aiService {
         messages: [
           {
             role: 'system',
-            content: `
-  당신은 독서 취향을 분석해주는 섬세한 AI 북 큐레이터입니다.
-  반드시 아래 JSON 형식으로만 응답하세요.
-  
-  {
-    "tasteSummary": "이 독자가 어떤 독서 취향을 가졌는지 따뜻하게 요약 (1~2문장)",
-    "familiarBooks": [
-      { "title": "책 제목", "author": "저자", "reason": "왜 이 취향에 잘 맞는지" }
-    ],
-    "challengeBooks": [
-      { "title": "책 제목", "author": "저자", "reason": "왜 새로운 시도로 추천하는지" }
-    ]
-  }
-            `,
+            content: `당신은 최신 도서 트렌드를 꿰뚫고 있는 전문 북 큐레이터입니다. 반드시 아래의 JSON 구조를 엄격히 지켜 응답하세요.
+            응답에는 오직 JSON만 포함하며, 다른 설명이나 텍스트는 금지합니다.
+            
+            {
+              "tasteSummary": "문자열 (사용자의 취향 분석 요약)",
+              "familiarBooks": [
+                { "title": "문자열", "reason": "문자열" }
+              ],
+              "challengeBooks": [
+                { "title": "문자열", "reason": "문자열" }
+              ]
+            }`,
           },
           {
             role: 'user',
             content: `
-  다음은 사용자의 책장 목록입니다.
-  이 독자의 취향을 먼저 요약한 뒤,
-  1) 취향에 꼭 맞는 책 3권
-  2) 취향을 살짝 확장해볼 수 있는 책 2권
-  을 추천해주세요.
-  
-  [책장 목록]
-  ${books.map((b) => `- ${b.title} / ${b.author} (${b.status})`).join('\n')}
+              [사용자의 책장]: ${JSON.stringify(books)}
+              [추천 후보 도서]: ${JSON.stringify(similarBooks)}
+              
+              분석 지시:
+              1. 'familiarBooks': 사용자의 책장에 있는 책들과 장르, 주제, 문체가 매우 유사한 책 3권을 추천 후보 중에서 고르거나 새로 제안하세요.
+              2. 'challengeBooks': 기존 취향과 연결고리가 있지만, 새로운 시각을 줄 수 있는 책 2권을 추천하세요.
+              3. 각 추천 이유에는 "당신이 읽었던 'OOO'과 이런 점이 비슷하여 추천합니다"라는 구체적인 언급을 포함하세요.
             `,
           },
         ],
