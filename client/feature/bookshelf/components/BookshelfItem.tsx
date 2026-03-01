@@ -1,5 +1,6 @@
 "use client";
 
+import { EMOTION_EMOJIS } from "@/app/constants/emotion";
 import Image from "next/image";
 import type { BookshelfItem as Item } from "../type";
 import { BookStatusBadge } from "./BookStatusBadge";
@@ -7,19 +8,7 @@ import { BookStatusBadge } from "./BookStatusBadge";
 export function BookshelfItem({ item }: { item: Item }) {
   const getEmotionEmoji = (emotion: string | null) => {
     if (!emotion) return null;
-    const emotions: Record<string, string> = {
-      힐링: "🌿",
-      열정: "🔥",
-      몰입: "🤔",
-      감동: "💧",
-      짜릿: "⚡",
-      위로: "🫂",
-      궁금: "🧐",
-      평온: "😌",
-      슬픔: "😢",
-      성장: "🌱",
-    };
-    return emotions[emotion] || "✨";
+    return EMOTION_EMOJIS[emotion] || "✨";
   };
 
   return (
