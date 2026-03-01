@@ -27,6 +27,7 @@ export class BooksService {
       title: item.title.replace(/<[^>]*>/g, ''),
       author: item.author,
       imageUrl: item.image,
+      description: item.description.replace(/<[^>]*>/g, ''),
     }));
   }
 }

@@ -5,6 +5,7 @@ export class AddBookDto {
   title: string;
   author: string;
   imageUrl: string;
+  description: string;
 
   @IsEnum(['BEFORE', 'READING', 'DONE'])
   status: 'BEFORE' | 'READING' | 'DONE';

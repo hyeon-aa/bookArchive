@@ -11,4 +11,5 @@ export class SearchResponseDto {
   title: string;
   author: string;
   imageUrl: string;
+  description: string;
 }

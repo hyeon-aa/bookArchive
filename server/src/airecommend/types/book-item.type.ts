@@ -3,4 +3,5 @@ export interface BookItem {
   title: string;
   author: string;
   imageUrl: string;
+  description: string;
 }

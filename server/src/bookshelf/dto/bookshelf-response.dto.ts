@@ -3,6 +3,7 @@ export class BookResponseDto {
   title: string;
   author: string;
   imageUrl: string;
+  description: string;
 }
 
 export class BookshelfResponseDto {
