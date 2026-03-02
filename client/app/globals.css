@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 255, 255, 255;
+  --primary-sage: 124, 152, 133;
+  --secondary-sage-light: 166, 188, 175;
+  --accent-cream: 245, 240, 230;
+}
+
+@media (min-width: 481px) {
+  :root {
+    --background-rgb: 248, 249, 247;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+@layer utilities {
+  /* 스크롤바 숨김 (기능은 유지) */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+}

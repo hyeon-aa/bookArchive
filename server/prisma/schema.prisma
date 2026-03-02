@@ -19,4 +19,65 @@ model User {
   password  String
   name      String?
   createdAt DateTime @default(now())
+  bookshelf Bookshelf[]
+  payments  Payment[]
+}
+
+enum BookStatus {
+  BEFORE
+  READING
+  DONE
+}
+
+model Book {
+  id        Int         @id @default(autoincrement())
+  isbn      String      @unique
+  title     String
+  author    String
+  imageUrl  String
+  description String
+  createdAt DateTime    @default(now())
+  bookshelf Bookshelf[]
+}
+
+model Bookshelf {
+  id        Int        @id @default(autoincrement())
+  userId    Int
+  bookId    Int
+  status    BookStatus
+  createdAt DateTime   @default(now())
+
+  comment   String?    // 한줄평
+  emotion   String?    // 감정
+  startDate DateTime?  // 시작 날짜
+  endDate   DateTime?  // 완료 날짜
+
+  aiComment String?
+  aiTags    String[]
+
+  user User @relation(fields: [userId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@unique([userId, bookId])
+}
+
+model BookEmbedding {
+  id        Int    @id @default(autoincrement())
+  userId    Int
+  bookId    Int
+  embedding Unsupported("vector(3072)")
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id            Int      @id @default(autoincrement())
+  orderId       String   @unique
+  paymentKey    String?  
+  amount        Int
+  status        String   // READY, DONE, FAIL
+  orderName     String
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
