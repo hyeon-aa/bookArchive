@@ -8,6 +8,7 @@ import { BooksModule } from './books/books.module';
 import { BookshelfModule } from './bookshelf/bookshelf.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PrismaModule } from './prisma/prisma.module';
     BookshelfModule,
     AirecommendModule,
     DashboardModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
