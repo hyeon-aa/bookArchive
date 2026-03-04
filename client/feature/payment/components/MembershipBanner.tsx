@@ -3,24 +3,16 @@
 import { usePaymentMutation } from "@/feature/payment/queries";
 
 export function MembershipBanner() {
-  const { mutate: requestPayment, isPending: isPaying } = usePaymentMutation();
+  const { mutateAsync: requestPayment, isPending: isPaying } =
+    usePaymentMutation();
 
-  const handleMembershipSignup = () => {
-    const orderId = `order-${Math.random().toString(36).slice(2, 11)}`;
-
-    requestPayment(
-      {
-        orderId,
-        amount: 3900,
-        orderName: "북아카이브 멤버십",
-      },
-      {
-        onError: (err) => {
-          console.error("결제 준비 중 오류:", err);
-          alert("결제 준비에 실패했습니다.");
-        },
-      }
-    );
+  const handleMembershipSignup = async () => {
+    try {
+      await requestPayment();
+      console.log("결제창이 성공적으로 열렸습니다.");
+    } catch (err) {
+      console.error("결제 준비 중 오류:", err);
+    }
   };
 
   return (
