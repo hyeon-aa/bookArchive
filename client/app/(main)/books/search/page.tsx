@@ -1,6 +1,7 @@
 "use client";
 
-import { useBookSearch } from "@/feature/books/queries";
+import { useIntersectionObserver } from "@/app/hooks/useIntersectionObserver";
+import { useBookInfiniteSearch } from "@/feature/books/queries";
 import type { BookSearch } from "@/feature/books/type";
 import { BookStatusModal } from "@/feature/bookshelf/components/BookStatusModal";
 import { useAddBook } from "@/feature/bookshelf/queries";
@@ -10,7 +11,22 @@ import { useState } from "react";
 
 export default function BookSearchPage() {
   const [query, setQuery] = useState("");
-  const { data: books = [], isLoading, refetch } = useBookSearch(query);
+  const {
+    data,
+    isFetching,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useBookInfiniteSearch(query);
+
+  const observerRef = useIntersectionObserver(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, hasNextPage);
+
+  const books = data?.pages.flat() ?? [];
   const { mutate: addBook, isPending: isAdding } = useAddBook();
 
   const [selectedBook, setSelectedBook] = useState<BookSearch | null>(null);
@@ -78,7 +94,7 @@ export default function BookSearchPage() {
           </button>
         </div>
 
-        {isLoading && <p className="text-gray-500">검색 중...</p>}
+        {isFetching && <p className="text-gray-500">검색 중...</p>}
 
         <ul className="space-y-4">
           {books.map((book) => (
@@ -112,6 +128,17 @@ export default function BookSearchPage() {
             </li>
           ))}
         </ul>
+        <div
+          ref={observerRef}
+          className="h-20 flex items-center justify-center"
+        >
+          {isFetchingNextPage && (
+            <p className="text-gray-500">데이터를 더 불러오는 중...</p>
+          )}
+          {!hasNextPage && books.length > 0 && (
+            <p className="text-gray-400 text-sm">마지막 결과입니다.</p>
+          )}
+        </div>
         <BookStatusModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}

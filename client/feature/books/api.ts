@@ -2,7 +2,9 @@ import { api } from "@/lib/api";
 import { BookSearch } from "./type";
 
 export const bookSearchApi = {
-  search: async (query: string): Promise<BookSearch[]> => {
-    return api(`/books/search?query=${encodeURIComponent(query)}`);
+  search: (query: string, start: number = 1): Promise<BookSearch[]> => {
+    return api.get("/books/search", {
+      params: { query, start },
+    });
   },
 };
