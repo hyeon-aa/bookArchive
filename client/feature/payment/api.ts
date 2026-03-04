@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { api } from "@/lib/api";
 import {
   ConfirmPaymentDto,
   PaymentRecord,
@@ -7,23 +7,11 @@ import {
 } from "./type";
 
 export const paymentApi = {
-  ready: async (dto: ReadyPaymentDto): Promise<PaymentRecord> => {
-    return await apiFetch("/payments/ready", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-      body: JSON.stringify(dto),
-    });
+  ready: (dto: ReadyPaymentDto): Promise<PaymentRecord> => {
+    return api.post("/payments/ready", dto);
   },
 
-  confirm: async (dto: ConfirmPaymentDto): Promise<TossConfirmResponse> => {
-    return await apiFetch("/payments/confirm", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-      body: JSON.stringify(dto),
-    });
+  confirm: (dto: ConfirmPaymentDto): Promise<TossConfirmResponse> => {
+    return api.post("/payments/confirm", dto);
   },
 };
