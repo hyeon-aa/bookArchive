@@ -1,36 +1,19 @@
-// lib/auth.ts
-import { apiFetch } from "../../lib/api";
-import { LoginForm, SignUpForm } from "./type";
-
-// 유저 타입 정의 (필요시)
-export interface User {
-  id: string;
-  email: string;
-  nickname: string;
-}
-
-export interface LoginResponse {
-  accessToken: string;
-  user: User;
-}
+import { api } from "../../lib/api";
+import { LoginForm, LoginResponse, SignUpForm } from "./type";
 
 export const authApi = {
   login: async (form: LoginForm): Promise<LoginResponse> => {
-    const data = await apiFetch("/auth/login", {
-      method: "POST",
-      body: JSON.stringify(form),
-    });
+    const data: LoginResponse = await api.post("/auth/login", form);
 
-    localStorage.setItem("accessToken", data.accessToken);
-    localStorage.setItem("user", JSON.stringify(data.user));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("user", JSON.stringify(data.user));
+    }
 
     return data;
   },
 
   signUp: async (form: SignUpForm) => {
-    return await apiFetch("/auth/signup", {
-      method: "POST",
-      body: JSON.stringify(form),
-    });
+    return await api.post("/auth/signup", form);
   },
 };
