@@ -1,6 +1,6 @@
 "use client";
 
-import { exploreApi } from "@/feature/explore/api";
+import { useRecommendByEmotion } from "@/feature/explore/queries";
 import { BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -10,31 +10,30 @@ export default function AIRecommendPage() {
   const [activeTab, setActiveTab] = useState(MOOD_DATA[0].id);
   const [todayMood, setTodayMood] = useState("");
   const [wantMood, setWantMood] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { mutate: recommend, isPending } = useRecommendByEmotion();
 
   const router = useRouter();
 
-  const handleRecommend = async () => {
+  const handleRecommend = () => {
     if (!todayMood || !wantMood) return;
 
-    setLoading(true);
-    try {
-      const response = await exploreApi.recommendByEmotion(todayMood, wantMood);
-
-      if (response) {
-        console.log("추천 결과:", response);
-        router.push(
-          `/airecommend/result?data=${encodeURIComponent(
-            JSON.stringify(response)
-          )}`
-        );
+    recommend(
+      { mood: todayMood, talk: wantMood },
+      {
+        onSuccess: (response) => {
+          if (response) {
+            router.push(
+              `/airecommend/result?data=${encodeURIComponent(
+                JSON.stringify(response)
+              )}`
+            );
+          }
+        },
+        onError: (error) => {
+          console.error("추천 실패:", error);
+        },
       }
-    } catch (error) {
-      console.error("추천 실패:", error);
-      alert("AI 추천을 가져오는 데 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
+    );
   };
 
   return (
@@ -92,7 +91,7 @@ export default function AIRecommendPage() {
             </div>
           </div>
 
-          {!loading && (
+          {!isPending && (
             <div className="space-y-4 pt-2">
               <label className="text-sm font-bold text-[#5A5A5A] flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-[#7C9885] text-white flex items-center justify-center text-[10px]">
@@ -125,7 +124,7 @@ export default function AIRecommendPage() {
             </div>
           )}
 
-          {loading && (
+          {isPending && (
             <div className="flex flex-col items-center justify-center py-10 space-y-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#7C9885]"></div>
               <p className="text-[#7C9885] font-medium text-sm">

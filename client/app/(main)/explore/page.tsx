@@ -1,34 +1,19 @@
 "use client";
 
-import { exploreApi } from "@/feature/explore/api";
 import { AIRecommendButton } from "@/feature/explore/components/AIRecommendButton";
 import { DailyQuoteCard } from "@/feature/explore/components/DailyQuoteCard";
 import { TasteRecommendation } from "@/feature/explore/components/TasteRecommendation";
-import { DailyQuote, TasteRecommend } from "@/feature/explore/type";
-import { useEffect, useState } from "react";
+import {
+  useDailyQuote,
+  useTasteRecommendations,
+} from "@/feature/explore/queries";
 
 export default function ExplorePage() {
-  const [quoteData, setQuoteData] = useState<DailyQuote | null>(null);
-  const [tasteData, setTasteData] = useState<TasteRecommend | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: quoteData, isLoading: isQuoteLoading } = useDailyQuote();
+  const { data: tasteData, isLoading: isTasteLoading } =
+    useTasteRecommendations();
 
-  useEffect(() => {
-    const initData = async () => {
-      try {
-        const [quote, taste] = await Promise.all([
-          exploreApi.getDailyQuote(),
-          exploreApi.getTasteRecommendations(),
-        ]);
-        setQuoteData(quote);
-        setTasteData(taste);
-      } catch (error) {
-        console.error("error", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    initData();
-  }, []);
+  const isLoading = isQuoteLoading || isTasteLoading;
 
   return (
     <div className="min-h-screen bg-[#F8F9F7]">

@@ -1,40 +1,24 @@
 "use client";
 
 import { EMOTION_EMOJIS } from "@/app/constants/emotion";
-import { bookshelfApi } from "@/feature/bookshelf/api";
 import { BookshelfItem } from "@/feature/bookshelf/components/BookshelfItem";
-import type { BookshelfItem as Item } from "@/feature/bookshelf/type";
+import { useMyBooks } from "@/feature/bookshelf/queries";
 import { LayoutGrid, List } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export default function BookshelfPage() {
   const router = useRouter();
-  const [books, setBooks] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
-  const fetchBooks = async () => {
-    try {
-      const data = await bookshelfApi.getMyBooks();
-      setBooks(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: books = [], isLoading } = useMyBooks();
 
-  useEffect(() => {
-    fetchBooks();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[80vh]">
         <p className="text-[#A6BCAF] font-bold animate-pulse text-sm uppercase tracking-widest">
-          Loading library...
+          로딩중
         </p>
       </div>
     );
@@ -51,6 +35,7 @@ export default function BookshelfPage() {
             </p>
           </div>
 
+          {/* 뷰 모드 전환 버튼 */}
           <div className="flex bg-[#F5F0E6] p-1 rounded-xl border border-[#7C9885]/10">
             <button
               onClick={() => setViewMode("list")}
@@ -75,6 +60,7 @@ export default function BookshelfPage() {
           </div>
         </header>
 
+        {/* 데이터 유무에 따른 렌더링 */}
         {books.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[2.5rem] border border-[#F5F0E6]">
             <span className="text-4xl mb-4 grayscale">📚</span>
@@ -83,6 +69,7 @@ export default function BookshelfPage() {
             </p>
           </div>
         ) : viewMode === "list" ? (
+          /* 리스트 뷰 */
           <ul className="space-y-4">
             {books.map((item) => (
               <li
@@ -95,6 +82,7 @@ export default function BookshelfPage() {
             ))}
           </ul>
         ) : (
+          /* 그리드 뷰 */
           <div className="grid grid-cols-3 gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
             {books.map((item) => (
               <div
@@ -106,6 +94,7 @@ export default function BookshelfPage() {
                   src={item.book.imageUrl}
                   alt={item.book.title}
                   fill
+                  sizes="(max-width: 768px) 33vw, 200px"
                   className="object-cover"
                 />
                 {item.emotion && (

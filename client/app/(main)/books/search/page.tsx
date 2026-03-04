@@ -1,33 +1,24 @@
 "use client";
 
-import { bookSearchApi } from "@/feature/books/api";
+import { useBookSearch } from "@/feature/books/queries";
 import type { BookSearch } from "@/feature/books/type";
-import { bookshelfApi } from "@/feature/bookshelf/api";
 import { BookStatusModal } from "@/feature/bookshelf/components/BookStatusModal";
+import { useAddBook } from "@/feature/bookshelf/queries";
 import { BookStatus } from "@/feature/bookshelf/type";
 import Image from "next/image";
 import { useState } from "react";
 
 export default function BookSearchPage() {
   const [query, setQuery] = useState("");
-  const [books, setBooks] = useState<BookSearch[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { data: books = [], isLoading, refetch } = useBookSearch(query);
+  const { mutate: addBook, isPending: isAdding } = useAddBook();
 
   const [selectedBook, setSelectedBook] = useState<BookSearch | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const handleSearch = async () => {
+  const handleSearch = () => {
     if (!query.trim()) return;
-
-    setLoading(true);
-    try {
-      const data = await bookSearchApi.search(query);
-      setBooks(data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+    refetch();
   };
 
   const handleOpenModal = (book: BookSearch) => {
@@ -35,26 +26,30 @@ export default function BookSearchPage() {
     setModalOpen(true);
   };
 
-  const handleSelectStatus = async (status: BookStatus) => {
+  const handleSelectStatus = (status: BookStatus) => {
     if (!selectedBook) return;
 
-    try {
-      await bookshelfApi.addBook({
+    setModalOpen(false);
+    setSelectedBook(null);
+
+    addBook(
+      {
         isbn: selectedBook.isbn,
         title: selectedBook.title,
         author: selectedBook.author,
         imageUrl: selectedBook.imageUrl,
         description: selectedBook.description,
         status,
-      });
-
-      alert("내 책장에 등록되었습니다 📚");
-    } catch {
-      alert("등록 실패");
-    } finally {
-      setModalOpen(false);
-      setSelectedBook(null);
-    }
+      },
+      {
+        onSuccess: () => {
+          alert("내 책장에 등록되었습니다 📚");
+        },
+        onError: () => {
+          alert("등록에 실패했습니다.");
+        },
+      }
+    );
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -83,7 +78,7 @@ export default function BookSearchPage() {
           </button>
         </div>
 
-        {loading && <p className="text-gray-500">검색 중...</p>}
+        {isLoading && <p className="text-gray-500">검색 중...</p>}
 
         <ul className="space-y-4">
           {books.map((book) => (
@@ -106,12 +101,15 @@ export default function BookSearchPage() {
 
               <button
                 onClick={() => handleOpenModal(book)}
+                disabled={isAdding}
                 className="self-center px-4 py-2 text-sm rounded-md border 
     border-[rgb(var(--primary-sage))] 
     text-[rgb(var(--primary-sage))] 
     hover:bg-[rgb(var(--accent-cream))]"
               >
-                등록하기
+                {isAdding && selectedBook?.isbn === book.isbn
+                  ? "등록 중!"
+                  : "등록하기"}
               </button>
             </li>
           ))}
