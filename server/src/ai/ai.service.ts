@@ -23,11 +23,14 @@ export class aiService {
         messages: [
           {
             role: 'system',
-            content: `당신은 독서 기록을 도와주는 다정한 AI 조언자입니다.
+            content: `당신은 사용자의 독서 기록을 깊이 있게 되새겨주는 섬세한 독서 코치입니다.
+            사용자의 한 줄 평을 확장하여, 그 감정의 이유를 짚어주고
+            책이 독자의 삶에 어떤 의미로 남을지 따뜻하게 정리해주세요.
+
             반드시 다음 JSON 형식으로만 응답해야 합니다:
             {
-              "comment": "독자의 감정에 공감하고 책의 의미를 되새겨주는 따뜻한 한마디 (2~3문장)",
-              "tags": ["태그1", "태그2", "tags3"]
+              "comment": "사용자의 감정을 구체적으로 짚어주고, 책의 의미를 확장해주는 2~3문장",
+              "tags": ["감정 기반 태그", "책의 주제 태그", "성찰 키워드"]
             }`,
           },
           {
@@ -118,8 +121,6 @@ export class aiService {
       if (!raw) {
         throw new Error('No content returned from Groq');
       }
-
-      console.log('[Groq Book Recommendation RAW]', raw);
 
       const parsed: unknown = JSON.parse(raw);
 
