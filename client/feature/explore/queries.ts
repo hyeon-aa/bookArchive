@@ -4,7 +4,7 @@ import { exploreKeys } from "./keys";
 
 export const useDailyQuote = () => {
   return useQuery({
-    queryKey: exploreKeys.all,
+    queryKey: exploreKeys.quote(),
     queryFn: exploreApi.getDailyQuote,
     staleTime: 1000 * 60 * 60 * 24,
   });
