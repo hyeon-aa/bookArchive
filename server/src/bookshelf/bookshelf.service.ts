@@ -131,7 +131,7 @@ export class BookshelfService {
       startDate: item.startDate,
       endDate: item.endDate,
       createdAt: item.createdAt,
-      aicomment: item.aiComment,
+      aiComment: item.aiComment,
       book: {
         isbn: item.book.isbn,
         title: item.book.title,
