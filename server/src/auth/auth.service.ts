@@ -1,10 +1,9 @@
-// src/auth/auth.service.ts
 import {
   ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt'; // 추가
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -12,7 +11,6 @@ import { LoginUserDto } from './dto/login-user.dto';
 
 @Injectable()
 export class AuthService {
-  // 1. JwtService를 주입(Injection)해야 사용할 수 있습니다.
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -47,8 +45,8 @@ export class AuthService {
     };
   }
 
-  async login(LoginUserDto: LoginUserDto) {
-    const { email, password } = LoginUserDto;
+  async login(loginUserDto: LoginUserDto) {
+    const { email, password } = loginUserDto;
 
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
