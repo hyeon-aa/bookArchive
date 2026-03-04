@@ -1,18 +1,29 @@
+import axios, { AxiosError } from "axios";
+
 const API_URL = "http://localhost:4000";
 
-export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
+export const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "문제가 발생했습니다.");
+api.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const token = window.localStorage.getItem("accessToken");
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
+  return config;
+});
 
-  return response.json();
-};
+api.interceptors.response.use(
+  (response) => response.data,
+  (error: AxiosError<{ message?: string }>) => {
+    const errorMessage =
+      error.response?.data?.message || "문제가 발생했습니다.";
+    return Promise.reject(new Error(errorMessage));
+  }
+);

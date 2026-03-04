@@ -8,6 +8,6 @@ export class BooksController {
 
   @Get('search')
   search(@Query() query: SearchQueryDto) {
-    return this.service.search(query.query);
+    return this.service.search(query.query, query.start);
   }
 }

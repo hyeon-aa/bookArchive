@@ -1,7 +1,6 @@
 import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
-import { Payment } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/jwt-auth-guard';
-import { ConfirmPaymentDto, ReadyPaymentDto } from './dto/payment.dto';
+import { ConfirmPaymentDto } from './dto/payment.dto';
 import { PaymentService } from './payment.service';
 
 interface AuthRequest extends Request {
@@ -14,11 +13,14 @@ export class PaymentController {
 
   @UseGuards(JwtAuthGuard)
   @Post('ready')
-  async ready(
-    @Req() req: AuthRequest,
-    @Body() dto: ReadyPaymentDto,
-  ): Promise<Payment> {
-    return await this.paymentService.createReady(req.user.userId, dto);
+  async ready(@Req() req: AuthRequest) {
+    const payment = await this.paymentService.createReady(req.user.userId);
+
+    return {
+      orderId: payment.orderId,
+      amount: payment.amount,
+      orderName: payment.orderName,
+    };
   }
 
   @UseGuards(JwtAuthGuard)

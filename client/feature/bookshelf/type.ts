@@ -1,5 +1,14 @@
 export type BookStatus = "READING" | "DONE" | "BEFORE";
 
+export interface UpdateBookshelfRequest {
+  status?: BookStatus;
+  comment?: string;
+  emotion?: string;
+  startDate?: string;
+  endDate?: string;
+  title?: string;
+}
+
 export interface BookshelfItem {
   id: number;
   status: BookStatus;
@@ -9,7 +18,7 @@ export interface BookshelfItem {
   startDate?: string | Date | null;
   endDate?: string | Date | null;
   aiTags?: string[] | null;
-  aicomment?: string | null;
+  aiComment?: string | null;
 
   book: {
     id: number;

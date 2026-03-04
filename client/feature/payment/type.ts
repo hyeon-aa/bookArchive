@@ -1,6 +1,4 @@
 export interface ReadyPaymentDto {
-  orderId: string;
-  amount: number;
   orderName: string;
 }
 

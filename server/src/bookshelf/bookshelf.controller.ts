@@ -1,4 +1,3 @@
-// bookshelf.controller.ts
 import {
   Body,
   Controller,

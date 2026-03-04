@@ -1,30 +1,18 @@
-import { apiFetch } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export const exploreApi = {
   recommendByEmotion: (currentMood: string, userTalk: string) => {
-    return apiFetch("/ai-recommend", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-      body: JSON.stringify({ currentMood, userTalk }),
+    return api.post("/ai-recommend", {
+      currentMood,
+      userTalk,
     });
   },
+
   getDailyQuote: () => {
-    return apiFetch("/ai-recommend/daily-quote", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-    });
+    return api.get("/ai-recommend/daily-quote");
   },
+
   getTasteRecommendations: () => {
-    return apiFetch("/ai-recommend/taste", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-      },
-    });
+    return api.get("/ai-recommend/taste");
   },
 };
