@@ -1,23 +1,24 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Payment } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
-import { ConfirmPaymentDto, ReadyPaymentDto } from './dto/payment.dto';
+import { ConfirmPaymentDto } from './dto/payment.dto';
 
 @Injectable()
 export class PaymentService {
   constructor(private readonly prisma: PrismaService) {}
 
   /*결제 요청 전, READY 상태의 결제 기록 생성*/
-  async createReady(userId: number, dto: ReadyPaymentDto): Promise<Payment> {
-    console.log(
-      `[Payment] 결제 준비 생성 시작 - UserId: ${userId}, OrderId: ${dto.orderId}`,
-    );
+  async createReady(userId: number): Promise<Payment> {
+    const orderId = `order_${randomUUID()}`;
+    const MEMBERSHIP_PRICE = 3900;
+    const MEMBERSHIP_NAME = '북아카이브 멤버십';
 
     return await this.prisma.payment.create({
       data: {
-        orderId: dto.orderId,
-        amount: dto.amount,
-        orderName: dto.orderName,
+        orderId,
+        amount: MEMBERSHIP_PRICE,
+        orderName: MEMBERSHIP_NAME,
         userId: userId,
         status: 'READY',
       },
@@ -29,8 +30,6 @@ export class PaymentService {
     const { paymentKey, orderId, amount } = dto;
     const secretKey = process.env.TOSS_SECRET_KEY ?? '';
     const encodedKey = Buffer.from(`${secretKey}:`).toString('base64');
-
-    console.log(`[Payment] 결제 승인 요청 시작 - OrderId: ${orderId}`);
 
     try {
       const response = await fetch(
@@ -62,7 +61,6 @@ export class PaymentService {
         },
       });
 
-      console.log(`[Payment] 결제 승인 완료 - OrderId: ${orderId}`);
       return result;
     } catch (error: unknown) {
       await this.handlePaymentFailure(orderId);
