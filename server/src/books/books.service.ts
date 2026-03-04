@@ -8,12 +8,12 @@ import { BookSearchResponse } from './types/searchBook.type';
 export class BooksService {
   constructor(private readonly http: HttpService) {}
 
-  async search(query: string): Promise<SearchResponseDto[]> {
+  async search(query: string, start: number = 1): Promise<SearchResponseDto[]> {
     const res = await firstValueFrom(
       this.http.get<BookSearchResponse>(
         'https://openapi.naver.com/v1/search/book.json',
         {
-          params: { query, display: 10 },
+          params: { query, display: 10, start: start },
           headers: {
             'X-Naver-Client-Id': process.env.NAVER_CLIENT_ID!,
             'X-Naver-Client-Secret': process.env.NAVER_CLIENT_SECRET!,
