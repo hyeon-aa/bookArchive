@@ -107,9 +107,7 @@ export default function BookSearchPage() {
     text-[rgb(var(--primary-sage))] 
     hover:bg-[rgb(var(--accent-cream))]"
               >
-                {isAdding && selectedBook?.isbn === book.isbn
-                  ? "등록 중!"
-                  : "등록하기"}
+                등록하기
               </button>
             </li>
           ))}
