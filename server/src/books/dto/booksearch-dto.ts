@@ -1,5 +1,12 @@
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class SearchQueryDto {
   @IsString()
@@ -8,7 +15,10 @@ export class SearchQueryDto {
 
   @IsOptional()
   @Type(() => Number)
-  start?: number = 1;
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  start: number = 1;
 }
 
 export class SearchResponseDto {
