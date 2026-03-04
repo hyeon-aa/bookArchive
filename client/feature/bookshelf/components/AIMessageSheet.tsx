@@ -18,7 +18,9 @@ export function AIMessageSheet({
 
         <Drawer.Content
           className="
-            fixed bottom-0 left-0 right-0 z-50
+            fixed bottom-0 left-1/2 -translate-x-1/2
+            w-full max-w-[480px]
+            z-50
             rounded-t-[2rem] bg-white
             px-6 pt-6 pb-10
             focus:outline-none
@@ -39,7 +41,7 @@ export function AIMessageSheet({
               onClick={onClose}
               className="mt-6 w-full h-12 rounded-xl bg-[#7C9885] text-white font-bold"
             >
-              고마워요
+              확인
             </button>
           </div>
         </Drawer.Content>
