@@ -9,7 +9,6 @@ export function MembershipBanner() {
   const handleMembershipSignup = async () => {
     try {
       await requestPayment();
-      console.log("결제창이 성공적으로 열렸습니다.");
     } catch (err) {
       console.error("결제 준비 중 오류:", err);
     }
