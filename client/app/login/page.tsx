@@ -1,9 +1,9 @@
 "use client";
 
 import { useLogin } from "@/feature/auth/queries";
-import { LoginForm } from "@/feature/auth/type";
+import { LoginRequest } from "@/feature/auth/type";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form"; // 추가
+import { useForm } from "react-hook-form";
 import { AuthLayout } from "../(auth)/AuthLayout";
 
 export default function LoginPage() {
@@ -14,14 +14,14 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginForm>({
+  } = useForm<LoginRequest>({
     defaultValues: {
       email: "",
       password: "",
     },
   });
 
-  const onSubmit = (data: LoginForm) => {
+  const onSubmit = (data: LoginRequest) => {
     login(data, {
       onSuccess: () => {
         router.push("/");

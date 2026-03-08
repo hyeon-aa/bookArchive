@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { loadTossPayments } from "@tosspayments/payment-sdk";
 import { paymentApi } from "./api";
-import { ConfirmPaymentDto } from "./type";
+import { ConfirmPaymentRequest } from "./type";
 
 export const usePaymentMutation = () => {
   return useMutation({
@@ -25,6 +25,6 @@ export const usePaymentMutation = () => {
 
 export const useConfirmPayment = () => {
   return useMutation({
-    mutationFn: (dto: ConfirmPaymentDto) => paymentApi.confirm(dto),
+    mutationFn: (dto: ConfirmPaymentRequest) => paymentApi.confirm(dto),
   });
 };

@@ -1,4 +1,4 @@
-export interface RecommendBookItem {
+export interface RecommendBookItemResponse {
   isbn: string;
   title: string;
   author: string;
@@ -6,7 +6,7 @@ export interface RecommendBookItem {
   description: string;
 }
 
-export interface DailyQuote {
+export interface DailyQuoteResponse {
   quote: string;
   bookTitle: string;
   author: string;
@@ -25,7 +25,7 @@ export interface RecommendedBook {
   reason: string;
 }
 
-export interface TasteRecommend {
+export interface TasteRecommendResponse {
   tasteSummary: string;
   familiarBooks: RecommendedBook[];
   challengeBooks: RecommendedBook[];

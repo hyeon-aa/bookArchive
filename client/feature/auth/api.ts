@@ -1,9 +1,9 @@
 import { api } from "../../lib/api";
-import { LoginForm, LoginResponse, SignUpForm } from "./type";
+import { LoginRequest, LoginResponse, SignUpRequest } from "./type";
 
 export const authApi = {
-  login: async (form: LoginForm): Promise<LoginResponse> => {
-    const data: LoginResponse = await api.post("/auth/login", form);
+  login: async (body: LoginRequest) => {
+    const data = await api.post<LoginResponse>("/auth/login", body);
 
     if (typeof window !== "undefined") {
       localStorage.setItem("accessToken", data.accessToken);
@@ -13,7 +13,7 @@ export const authApi = {
     return data;
   },
 
-  signUp: async (form: SignUpForm) => {
-    return await api.post("/auth/signup", form);
+  signUp: async (body: SignUpRequest): Promise<void> => {
+    await api.post("/auth/signup", body);
   },
 };

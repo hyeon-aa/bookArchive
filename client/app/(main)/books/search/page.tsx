@@ -2,7 +2,7 @@
 
 import { useIntersectionObserver } from "@/app/hooks/useIntersectionObserver";
 import { useBookInfiniteSearch } from "@/feature/books/queries";
-import type { BookSearch } from "@/feature/books/type";
+import type { BookSearchResponse } from "@/feature/books/type";
 import { BookStatusModal } from "@/feature/bookshelf/components/BookStatusModal";
 import { useAddBook } from "@/feature/bookshelf/queries";
 import { BookStatus } from "@/feature/bookshelf/type";
@@ -29,7 +29,9 @@ export default function BookSearchPage() {
   const books = data?.pages.flat() ?? [];
   const { mutate: addBook, isPending: isAdding } = useAddBook();
 
-  const [selectedBook, setSelectedBook] = useState<BookSearch | null>(null);
+  const [selectedBook, setSelectedBook] = useState<BookSearchResponse | null>(
+    null
+  );
   const [modalOpen, setModalOpen] = useState(false);
 
   const handleSearch = () => {
@@ -37,7 +39,7 @@ export default function BookSearchPage() {
     refetch();
   };
 
-  const handleOpenModal = (book: BookSearch) => {
+  const handleOpenModal = (book: BookSearchResponse) => {
     setSelectedBook(book);
     setModalOpen(true);
   };

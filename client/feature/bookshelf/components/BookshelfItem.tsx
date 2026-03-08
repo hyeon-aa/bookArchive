@@ -2,10 +2,10 @@
 
 import { EMOTION_EMOJIS } from "@/app/constants/emotion";
 import Image from "next/image";
-import type { BookshelfItem as Item } from "../type";
+import type { BookshelfItemResponse } from "../type";
 import { BookStatusBadge } from "./BookStatusBadge";
 
-export function BookshelfItem({ item }: { item: Item }) {
+export function BookshelfItem({ item }: { item: BookshelfItemResponse }) {
   const getEmotionEmoji = (emotion: string | null) => {
     if (!emotion) return null;
     return EMOTION_EMOJIS[emotion] || "✨";

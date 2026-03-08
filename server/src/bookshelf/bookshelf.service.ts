@@ -154,8 +154,6 @@ export class BookshelfService {
     let aiComment: string | undefined;
     let aiTags: string[] | undefined;
 
-    console.log('dto', dto);
-
     if (dto.comment || dto.emotion) {
       try {
         const aiResult: AITagResponseDto =

@@ -8,7 +8,7 @@ export interface EmotionStat {
   count: number;
 }
 
-export interface DashboardData {
+export interface DashboardResponse {
   totalCount: number;
   doneCount: number;
   readingCount: number;

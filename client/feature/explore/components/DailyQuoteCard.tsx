@@ -1,8 +1,8 @@
 import { Quote, Sparkles } from "lucide-react";
-import { DailyQuote } from "../type";
+import { DailyQuoteResponse } from "../type";
 
 interface DailyQuoteCardProps {
-  quoteData: DailyQuote | null;
+  quoteData: DailyQuoteResponse | null;
   isLoading: boolean;
 }
 

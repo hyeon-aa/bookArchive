@@ -5,7 +5,7 @@ import { EMOTIONS } from "@/app/constants/emotion";
 import { AIMessageSheet } from "@/feature/bookshelf/components/AIMessageSheet";
 import { useBookshelfItem, useUpdateBook } from "@/feature/bookshelf/queries";
 import {
-  BookshelfItem,
+  BookshelfItemResponse,
   BookStatus,
   UpdateBookshelfRequest,
 } from "@/feature/bookshelf/type";
@@ -21,7 +21,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function BookshelfEditForm({ item }: { item: BookshelfItem }) {
+export function BookshelfEditForm({ item }: { item: BookshelfItemResponse }) {
   const router = useRouter();
   const { mutate: updateBook, isPending: isSaving } = useUpdateBook(item.id);
 

@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "./api";
 import { authKeys } from "./keys";
-import { LoginForm, SignUpForm } from "./type";
+import { LoginRequest, SignUpRequest } from "./type";
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (form: LoginForm) => authApi.login(form),
+    mutationFn: (form: LoginRequest) => authApi.login(form),
     onSuccess: (data) => {
       queryClient.setQueryData(authKeys.user(), data.user);
     },
@@ -16,7 +16,7 @@ export const useLogin = () => {
 
 export const useSignUp = () => {
   return useMutation({
-    mutationFn: (form: SignUpForm) => authApi.signUp(form),
+    mutationFn: (form: SignUpRequest) => authApi.signUp(form),
     onSuccess: () => {
       console.log("회원가입 성공!");
     },

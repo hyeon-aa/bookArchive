@@ -1,30 +1,38 @@
 import { api } from "@/lib/api";
-import type { BookshelfItem, BookStatus, UpdateBookshelfRequest } from "./type";
+import type {
+  BookshelfItemResponse,
+  BookStatus,
+  UpdateBookshelfRequest,
+} from "./type";
 
 export const bookshelfApi = {
-  addBook: (body: {
+  addBook: async (body: {
     isbn: string;
     title: string;
     author: string;
     imageUrl: string;
     description: string;
     status: BookStatus;
-  }): Promise<BookshelfItem> => {
-    return api.post("/bookshelf", body);
+  }) => {
+    const data = await api.post<BookshelfItemResponse>("/bookshelf", body);
+    return data;
   },
 
-  getMyBooks: (): Promise<BookshelfItem[]> => {
-    return api.get("/bookshelf");
+  getMyBooks: async () => {
+    const data = await api.get<BookshelfItemResponse[]>("/bookshelf");
+    return data;
   },
 
-  getBookshelfItem: (id: number): Promise<BookshelfItem> => {
-    return api.get(`/bookshelf/${id}`);
+  getBookshelfItem: async (id: number) => {
+    const data = await api.get<BookshelfItemResponse>(`/bookshelf/${id}`);
+    return data;
   },
 
-  updateBookshelfItem: (
-    id: number,
-    body: UpdateBookshelfRequest
-  ): Promise<BookshelfItem> => {
-    return api.patch(`/bookshelf/${id}`, body);
+  updateBookshelfItem: async (id: number, body: UpdateBookshelfRequest) => {
+    const data = await api.patch<BookshelfItemResponse>(
+      `/bookshelf/${id}`,
+      body
+    );
+    return data;
   },
 };

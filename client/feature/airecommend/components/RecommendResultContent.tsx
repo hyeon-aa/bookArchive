@@ -2,14 +2,14 @@
 
 import { bookshelfApi } from "@/feature/bookshelf/api";
 import { BookStatus } from "@/feature/bookshelf/type";
-import { RecommendBookItem } from "@/feature/explore/type";
+import { RecommendBookItemResponse } from "@/feature/explore/type";
 import { ArrowLeft, BookOpen, Info, Plus, RefreshCcw } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 
 interface RecommendResult {
   reason: string;
-  books: RecommendBookItem[];
+  books: RecommendBookItemResponse[];
 }
 
 export default function RecommendResultContent() {
@@ -35,7 +35,7 @@ export default function RecommendResultContent() {
     );
   }
 
-  const handleAddToLibrary = async (book: RecommendBookItem) => {
+  const handleAddToLibrary = async (book: RecommendBookItemResponse) => {
     try {
       await bookshelfApi.addBook({
         isbn: book.isbn,
