@@ -5,7 +5,7 @@ export const BOOK_STATUS: {
   emoji: string;
   value: BookStatus;
 }[] = [
-  { label: "읽기 전", emoji: "⭐", value: "BEFORE" },
+  { label: "읽기 전", emoji: "🔖", value: "BEFORE" },
   { label: "읽는 중", emoji: "📖", value: "READING" },
   { label: "완독", emoji: "✅", value: "DONE" },
 ];
