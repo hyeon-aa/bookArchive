@@ -4,12 +4,15 @@ import { useIntersectionObserver } from "@/app/hooks/useIntersectionObserver";
 import { useBookInfiniteSearch } from "@/feature/books/queries";
 import type { BookSearchResponse } from "@/feature/books/type";
 import { BookStatusModal } from "@/feature/bookshelf/components/BookStatusModal";
+import { ReviewRedirectModal } from "@/feature/bookshelf/components/ReviewRedirectModal";
 import { useAddBook } from "@/feature/bookshelf/queries";
 import { BookStatus } from "@/feature/bookshelf/type";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function BookSearchPage() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const {
     data,
@@ -33,6 +36,8 @@ export default function BookSearchPage() {
     null
   );
   const [modalOpen, setModalOpen] = useState(false);
+  const [redirectModalOpen, setRedirectModalOpen] = useState(false);
+  const [newBookId, setNewBookId] = useState<number | null>(null);
 
   const handleSearch = () => {
     if (!query.trim()) return;
@@ -60,8 +65,14 @@ export default function BookSearchPage() {
         status,
       },
       {
-        onSuccess: () => {
-          alert("내 책장에 등록되었습니다 📚");
+        onSuccess: (data) => {
+          if (status === "DONE") {
+            setNewBookId(data.id);
+            setRedirectModalOpen(true);
+          } else {
+            alert("내 책장에 등록되었습니다 📚");
+            setSelectedBook(null);
+          }
         },
         onError: () => {
           alert("등록에 실패했습니다.");
@@ -145,6 +156,17 @@ export default function BookSearchPage() {
           open={modalOpen}
           onClose={() => setModalOpen(false)}
           onSelect={handleSelectStatus}
+        />
+        <ReviewRedirectModal
+          open={redirectModalOpen}
+          onConfirm={() => {
+            if (newBookId) router.push(`/bookshelf/${newBookId}`);
+          }}
+          onClose={() => {
+            setRedirectModalOpen(false);
+            setSelectedBook(null);
+            alert("책장에 등록되었어요!");
+          }}
         />
       </div>
     </div>
