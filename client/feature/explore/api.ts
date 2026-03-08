@@ -1,18 +1,24 @@
 import { api } from "@/lib/api";
+import {
+  DailyQuoteResponse,
+  RecommendBookItemResponse,
+  TasteRecommendResponse,
+} from "./type";
 
 export const exploreApi = {
-  recommendByEmotion: (currentMood: string, userTalk: string) => {
-    return api.post("/ai-recommend", {
+  recommendByEmotion: async (currentMood: string, userTalk: string) => {
+    const data = await api.post<RecommendBookItemResponse[]>("/ai-recommend", {
       currentMood,
       userTalk,
     });
+    return data;
   },
 
-  getDailyQuote: () => {
-    return api.get("/ai-recommend/daily-quote");
+  getDailyQuote: async () => {
+    return await api.get<DailyQuoteResponse>("/ai-recommend/daily-quote");
   },
 
-  getTasteRecommendations: () => {
-    return api.get("/ai-recommend/taste");
+  getTasteRecommendations: async () => {
+    return await api.get<TasteRecommendResponse>("/ai-recommend/taste");
   },
 };

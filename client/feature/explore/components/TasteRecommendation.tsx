@@ -2,15 +2,15 @@ import { bookshelfApi } from "@/feature/bookshelf/api";
 import { BookStatus } from "@/feature/bookshelf/type";
 import { BookHeart, Compass, Plus, Sparkles, Star } from "lucide-react";
 import Image from "next/image";
-import { RecommendBookItem, TasteRecommend } from "../type";
+import { RecommendBookItemResponse, TasteRecommendResponse } from "../type";
 
 interface TasteRecommendationProps {
-  data: TasteRecommend | null;
+  tasteData: TasteRecommendResponse | null;
   isLoading: boolean;
 }
 
 export function TasteRecommendation({
-  data,
+  tasteData,
   isLoading,
 }: TasteRecommendationProps) {
   if (isLoading) {
@@ -22,9 +22,9 @@ export function TasteRecommendation({
     );
   }
 
-  if (!data) return null;
+  if (!tasteData) return null;
 
-  const handleAddToLibrary = async (book: RecommendBookItem) => {
+  const handleAddToLibrary = async (book: RecommendBookItemResponse) => {
     try {
       await bookshelfApi.addBook({
         isbn: book.isbn,
@@ -56,7 +56,7 @@ export function TasteRecommendation({
             </span>
           </div>
           <p className="text-[14px] text-[#5A6A5F] leading-relaxed break-keep">
-            {data.tasteSummary}
+            {tasteData.tasteSummary}
           </p>
         </div>
       </div>
@@ -69,7 +69,7 @@ export function TasteRecommendation({
           </h2>
         </div>
         <div className="space-y-3">
-          {data.familiarBooks.map((item, i) => (
+          {tasteData.familiarBooks.map((item, i) => (
             <div
               key={i}
               className="group flex gap-4 p-4 rounded-2xl bg-white border border-[#EEF0ED] shadow-sm hover:shadow-md hover:border-[#7C9885]/20 transition-all"
@@ -125,7 +125,7 @@ export function TasteRecommendation({
           </span>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          {data.challengeBooks.map((item, i) => (
+          {tasteData.challengeBooks.map((item, i) => (
             <div
               key={i}
               className="group p-4 rounded-2xl border border-[#EEF0ED] bg-white shadow-sm hover:shadow-md hover:border-[#A6BCAF]/20 transition-all flex flex-col"

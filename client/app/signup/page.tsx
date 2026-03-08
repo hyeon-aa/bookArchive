@@ -1,7 +1,7 @@
 "use client";
 
 import { useSignUp } from "@/feature/auth/queries";
-import { SignUpForm } from "@/feature/auth/type";
+import { SignUpRequest } from "@/feature/auth/type";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { AuthLayout } from "../(auth)/AuthLayout";
@@ -14,7 +14,7 @@ export default function SignUpPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<SignUpForm>({
+  } = useForm<SignUpRequest>({
     defaultValues: {
       name: "",
       email: "",
@@ -22,7 +22,7 @@ export default function SignUpPage() {
     },
   });
 
-  const onSubmit = (data: SignUpForm) => {
+  const onSubmit = (data: SignUpRequest) => {
     signUp(data, {
       onSuccess: () => {
         alert("회원가입이 완료되었습니다. 로그인해주세요!");

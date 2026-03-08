@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { bookshelfApi } from "./api";
 import { bookshelfKeys } from "./keys";
-import { BookshelfItem, UpdateBookshelfRequest } from "./type";
+import { BookshelfItemResponse, UpdateBookshelfRequest } from "./type";
 
 export const useMyBooks = () => {
-  return useQuery<BookshelfItem[]>({
+  return useQuery<BookshelfItemResponse[]>({
     queryKey: bookshelfKeys.lists(),
     queryFn: bookshelfApi.getMyBooks,
   });

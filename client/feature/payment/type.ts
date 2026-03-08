@@ -1,14 +1,10 @@
-export interface ReadyPaymentDto {
-  orderName: string;
-}
-
-export interface ConfirmPaymentDto {
+export interface ConfirmPaymentRequest {
   paymentKey: string;
   orderId: string;
   amount: number;
 }
 
-export interface PaymentRecord {
+export interface PaymentResponse {
   id: number;
   orderId: string;
   amount: number;
@@ -19,7 +15,7 @@ export interface PaymentRecord {
   createdAt: string;
 }
 
-export interface TossConfirmResponse extends PaymentRecord {
+export interface TossConfirmResponse extends PaymentResponse {
   method?: string;
   requestedAt?: string;
   approvedAt?: string;

@@ -30,11 +30,15 @@ export default function ExplorePage() {
               Daily Pick
             </span>
           </div>
-          <DailyQuoteCard quoteData={quoteData} isLoading={isLoading} />
+          {quoteData && (
+            <DailyQuoteCard quoteData={quoteData} isLoading={isLoading} />
+          )}
         </div>
 
         {/* 취향 기반 도서 추천 섹션 */}
-        <TasteRecommendation data={tasteData} isLoading={isLoading} />
+        {tasteData && (
+          <TasteRecommendation tasteData={tasteData} isLoading={isLoading} />
+        )}
       </div>
     </div>
   );

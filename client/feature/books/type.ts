@@ -1,4 +1,4 @@
-export interface BookSearch {
+export interface BookSearchResponse {
   isbn: string;
   title: string;
   author: string;

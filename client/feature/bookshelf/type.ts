@@ -9,7 +9,16 @@ export interface UpdateBookshelfRequest {
   title?: string;
 }
 
-export interface BookshelfItem {
+export interface BookItem {
+  id: number;
+  isbn: string;
+  title: string;
+  author: string;
+  imageUrl: string;
+  description: string;
+}
+
+export interface BookshelfItemResponse {
   id: number;
   status: BookStatus;
   createdAt: string;
@@ -19,13 +28,5 @@ export interface BookshelfItem {
   endDate?: string | Date | null;
   aiTags?: string[] | null;
   aiComment?: string | null;
-
-  book: {
-    id: number;
-    isbn: string;
-    title: string;
-    author: string;
-    imageUrl: string;
-    description: string;
-  };
+  book: BookItem;
 }

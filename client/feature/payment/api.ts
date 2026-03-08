@@ -1,12 +1,18 @@
 import { api } from "@/lib/api";
-import { ConfirmPaymentDto, PaymentRecord, TossConfirmResponse } from "./type";
+import {
+  ConfirmPaymentRequest,
+  PaymentResponse,
+  TossConfirmResponse,
+} from "./type";
 
 export const paymentApi = {
-  ready: (): Promise<PaymentRecord> => {
-    return api.post("/payments/ready");
+  ready: async () => {
+    const data = await api.post<PaymentResponse>("/payments/ready");
+    return data;
   },
 
-  confirm: (dto: ConfirmPaymentDto): Promise<TossConfirmResponse> => {
-    return api.post("/payments/confirm", dto);
+  confirm: async (dto: ConfirmPaymentRequest) => {
+    const data = await api.post<TossConfirmResponse>("/payments/confirm", dto);
+    return data;
   },
 };
