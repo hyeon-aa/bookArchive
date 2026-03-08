@@ -1,6 +1,6 @@
 "use client";
 
-import { BookshelfEditForm } from "@/feature/bookshelf/components/BookshelfEditForm";
+import { BookshelfRecordForm } from "@/feature/bookshelf/components/BookshelfRecordForm";
 import { useBookshelfItem } from "@/feature/bookshelf/queries";
 import { useParams } from "next/navigation";
 
@@ -24,7 +24,7 @@ export default function BookshelfDetailPage() {
   return (
     <div className="min-h-screen bg-[#F8F9F7]">
       <div className="max-w-md mx-auto bg-white min-h-screen">
-        <BookshelfEditForm key={item.id} item={item} />
+        <BookshelfRecordForm key={item.id} item={item} />
       </div>
     </div>
   );

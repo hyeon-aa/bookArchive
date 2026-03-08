@@ -14,7 +14,7 @@ import { FunnelFooter } from "./steps/FunnelFooter";
 import { Step1Status } from "./steps/Step1Status";
 import { Step2Review } from "./steps/Step2Review";
 
-export function BookshelfEditForm({ item }: { item: BookshelfItemResponse }) {
+export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
   const router = useRouter();
   const { mutate: updateBook, isPending: isSaving } = useUpdateBook(item.id);
 
