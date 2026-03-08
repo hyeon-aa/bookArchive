@@ -1,3 +1,4 @@
+import { PaymentSuccessContent } from "@/feature/payment/components/PaymentSuccessContent";
 import { Suspense } from "react";
 
 export default function PaymentSuccessPage() {
@@ -9,7 +10,7 @@ export default function PaymentSuccessPage() {
         </div>
       }
     >
-      <PaymentSuccessPage />
+      <PaymentSuccessContent />
     </Suspense>
   );
 }
