@@ -7,12 +7,7 @@ import {
 import { Response } from 'express';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
-export interface BaseResponse<T> {
-  status: number;
-  message: string;
-  data: T;
-}
+import { BaseResponse } from '../dto/response.dto';
 
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<
