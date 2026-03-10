@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -12,6 +13,7 @@ import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth-guard';
 import { BookshelfService } from './bookshelf.service';
 import { AddBookDto } from './dto/add-book.dto';
+import { DeleteBookshelfDto } from './dto/delete-bookshelf.dto';
 import { UpdateBookshelfDto } from './dto/update-bookshelf.dto';
 
 interface AuthRequest extends Request {
@@ -47,5 +49,10 @@ export class BookshelfController {
     @Body() dto: UpdateBookshelfDto,
   ) {
     return this.service.updateBookshelf(Number(id), req.user.userId, dto);
+  }
+
+  @Delete('batch')
+  async deleteBooks(@Req() req: AuthRequest, @Body() dto: DeleteBookshelfDto) {
+    return await this.service.deleteBooks(req.user.userId, dto.bookshelfIds);
   }
 }
