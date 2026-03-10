@@ -2,8 +2,8 @@
 
 import { BooksGridView } from "@/feature/bookshelf/components/views/BooksGridView";
 import { BooksListView } from "@/feature/bookshelf/components/views/BooksListView";
-import { useDeleteBooks, useMyBooks } from "@/feature/bookshelf/queries";
-import { ConfirmModal } from "@/shared/components/common/ConfirmModal";
+import { useMyBooks } from "@/feature/bookshelf/queries";
+import { DeleteConfirmModal } from "@/shared/components/common/DeleteConfirmModal";
 import { useModal } from "@/shared/hooks/useModal";
 import { LayoutGrid, List, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -15,7 +15,6 @@ export default function BookshelfPage() {
   const { open, close } = useModal();
 
   const { data: books = [], isLoading } = useMyBooks();
-  const { mutate: deleteBooks, isPending } = useDeleteBooks();
 
   const toggleSelect = (id: number) => {
     setSelectedIds((prev) => {
@@ -26,28 +25,14 @@ export default function BookshelfPage() {
     });
   };
 
-  const handleConfirmDelete = () => {
-    deleteBooks(selectedIds, {
-      onSuccess: () => {
-        setIsEditMode(false);
-        setSelectedIds([]);
-        close();
-      },
-    });
-  };
   const openDeleteModal = () => {
     open(() => (
-      <ConfirmModal
-        title="삭제할까요?"
-        description={
-          <>
-            선택하신 {selectedIds.length}권의 도서 정보와
-            <br />
-            관련된 AI 분석 데이터가 모두 삭제됩니다.
-          </>
-        }
-        onConfirm={handleConfirmDelete}
-        isPending={isPending}
+      <DeleteConfirmModal
+        selectedIds={selectedIds}
+        onSuccess={() => {
+          setIsEditMode(false);
+          setSelectedIds([]);
+        }}
       />
     ));
   };
