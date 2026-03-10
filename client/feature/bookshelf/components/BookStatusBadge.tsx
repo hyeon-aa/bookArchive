@@ -1,4 +1,4 @@
-import { BOOK_STATUS, STATUS_STYLE } from "@/app/constants/book_status";
+import { BOOK_STATUS, STATUS_STYLE } from "@/shared/constants/book_status";
 import type { BookStatus } from "../type";
 
 export function BookStatusBadge({ status }: { status: BookStatus }) {

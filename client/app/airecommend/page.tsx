@@ -4,7 +4,7 @@ import { useRecommendByEmotion } from "@/feature/explore/queries";
 import { BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { MOOD_DATA } from "../constants/mood";
+import { MOOD_DATA } from "../../shared/constants/mood";
 
 export default function AIRecommendPage() {
   const [activeTab, setActiveTab] = useState(MOOD_DATA[0].id);

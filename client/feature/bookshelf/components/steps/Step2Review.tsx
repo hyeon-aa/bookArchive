@@ -1,5 +1,5 @@
-import { EMOTIONS } from "@/app/constants/emotion";
 import { UpdateBookshelfRequest } from "@/feature/bookshelf/type";
+import { EMOTIONS } from "@/shared/constants/emotion";
 import { Check, MessageSquare } from "lucide-react";
 import { FunnelStepLayout } from "./FunnelStepLayout";
 
