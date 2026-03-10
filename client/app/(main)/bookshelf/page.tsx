@@ -1,18 +1,56 @@
 "use client";
 
-import { EMOTION_EMOJIS } from "@/app/constants/emotion";
-import { BookshelfItem } from "@/feature/bookshelf/components/BookshelfItem";
-import { useMyBooks } from "@/feature/bookshelf/queries";
-import { LayoutGrid, List } from "lucide-react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { BooksGridView } from "@/feature/bookshelf/components/views/BooksGridView";
+import { BooksListView } from "@/feature/bookshelf/components/views/BooksListView";
+import { useDeleteBooks, useMyBooks } from "@/feature/bookshelf/queries";
+import { ConfirmModal } from "@/shared/components/common/ConfirmModal";
+import { useModal } from "@/shared/hooks/useModal";
+import { LayoutGrid, List, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 export default function BookshelfPage() {
-  const router = useRouter();
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const { open, close } = useModal();
 
   const { data: books = [], isLoading } = useMyBooks();
+  const { mutate: deleteBooks, isPending } = useDeleteBooks();
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((itemId) => itemId !== id);
+      }
+      return [...prev, id];
+    });
+  };
+
+  const handleConfirmDelete = () => {
+    deleteBooks(selectedIds, {
+      onSuccess: () => {
+        setIsEditMode(false);
+        setSelectedIds([]);
+        close();
+      },
+    });
+  };
+  const openDeleteModal = () => {
+    open(() => (
+      <ConfirmModal
+        title="삭제할까요?"
+        description={
+          <>
+            선택하신 {selectedIds.length}권의 도서 정보와
+            <br />
+            관련된 AI 분석 데이터가 모두 삭제됩니다.
+          </>
+        }
+        onConfirm={handleConfirmDelete}
+        isPending={isPending}
+      />
+    ));
+  };
 
   if (isLoading) {
     return (
@@ -25,42 +63,55 @@ export default function BookshelfPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9F7]">
-      <div className="max-w-md mx-auto px-5 pt-8 pb-20">
-        <header className="flex justify-between items-end mb-8 px-1">
+    <div className="min-h-screen bg-[#F8F9F7] relative">
+      <div className="max-w-md mx-auto px-5 pt-8 pb-32">
+        <header className="flex justify-between items-center mb-10 px-1">
           <div>
-            <h1 className="text-2xl font-black text-[#4A4A4A]">내 서재</h1>
-            <p className="text-[11px] text-[#7C9885] font-bold mt-1 uppercase tracking-tighter">
-              {books.length} books collected
+            <h1 className="text-2xl font-black text-[#4A4A4A] tracking-tight">
+              내 서재
+            </h1>
+            <p className="text-[11px] text-[#A6BCAF] font-medium mt-0.5">
+              총 <span className="text-[#7C9885]">{books.length}</span>권의 기록
             </p>
           </div>
 
-          {/* 뷰 모드 전환 버튼 */}
-          <div className="flex bg-[#F5F0E6] p-1 rounded-xl border border-[#7C9885]/10">
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 rounded-lg transition-all ${
-                viewMode === "list"
-                  ? "bg-white shadow-sm text-[#7C9885]"
-                  : "text-[#A6BCAF]"
+              onClick={() => {
+                setIsEditMode(!isEditMode);
+                setSelectedIds([]);
+              }}
+              className={`h-10 px-3 rounded-2xl font-bold text-xs transition-all flex items-center gap-1.5 ${
+                isEditMode
+                  ? "bg-[#FF5F5F] text-white shadow-lg shadow-[#FF5F5F]/20"
+                  : "bg-white text-[#7C9885] border border-[#7C9885]/20"
               }`}
             >
-              <List size={18} />
+              {isEditMode ? "취소" : "선택"}
             </button>
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-lg transition-all ${
-                viewMode === "grid"
-                  ? "bg-white shadow-sm text-[#7C9885]"
-                  : "text-[#A6BCAF]"
-              }`}
-            >
-              <LayoutGrid size={18} />
-            </button>
+
+            <div className="flex bg-[#F5F0E6]/50 p-1 rounded-2xl border border-[#7C9885]/10 backdrop-blur-sm">
+              {(["list", "grid"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className={`p-1.5 rounded-[10px] transition-all ${
+                    viewMode === mode
+                      ? "bg-white shadow-sm text-[#7C9885]"
+                      : "text-[#A6BCAF]"
+                  }`}
+                >
+                  {mode === "list" ? (
+                    <List size={16} />
+                  ) : (
+                    <LayoutGrid size={16} />
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </header>
 
-        {/* 데이터 유무에 따른 렌더링 */}
         {books.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[2.5rem] border border-[#F5F0E6]">
             <span className="text-4xl mb-4 grayscale">📚</span>
@@ -69,49 +120,33 @@ export default function BookshelfPage() {
             </p>
           </div>
         ) : viewMode === "list" ? (
-          /* 리스트 뷰 */
-          <ul className="space-y-4">
-            {books.map((item) => (
-              <li
-                key={item.id}
-                onClick={() => router.push(`/bookshelf/${item.id}`)}
-                className="cursor-pointer transition-transform active:scale-[0.97]"
-              >
-                <BookshelfItem item={item} />
-              </li>
-            ))}
-          </ul>
+          <BooksListView
+            books={books}
+            isEditMode={isEditMode}
+            selectedIds={selectedIds}
+            onSelect={toggleSelect}
+          />
         ) : (
-          /* 그리드 뷰 */
-          <div className="grid grid-cols-3 gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {books.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => router.push(`/bookshelf/${item.id}`)}
-                className="aspect-[2/3] relative rounded-xl overflow-hidden shadow-sm border border-[#F5F0E6] cursor-pointer transition-transform active:scale-[0.95] group"
-              >
-                <Image
-                  src={item.book.imageUrl}
-                  alt={item.book.title}
-                  fill
-                  sizes="(max-width: 768px) 33vw, 200px"
-                  className="object-cover"
-                />
-                {item.emotion && (
-                  <div className="absolute top-1.5 right-1.5 w-7 h-7 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center text-sm shadow-md border border-[#F5F0E6]">
-                    {EMOTION_EMOJIS[item.emotion] || "✨"}
-                  </div>
-                )}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
-                  <p className="text-white text-[10px] font-bold line-clamp-2 leading-tight">
-                    {item.book.title}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <BooksGridView
+            books={books}
+            isEditMode={isEditMode}
+            selectedIds={selectedIds}
+            onSelect={toggleSelect}
+          />
         )}
       </div>
+
+      {isEditMode && selectedIds.length > 0 && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-xs px-5 z-40">
+          <button
+            onClick={openDeleteModal}
+            className="w-full py-4 bg-[#4A4A4A] text-white font-black rounded-2xl shadow-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
+          >
+            <Trash2 size={18} />
+            {selectedIds.length}권 삭제하기
+          </button>
+        </div>
+      )}
     </div>
   );
 }

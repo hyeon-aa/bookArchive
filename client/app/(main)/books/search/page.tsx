@@ -1,19 +1,23 @@
 "use client";
 
-import { useIntersectionObserver } from "@/app/hooks/useIntersectionObserver";
 import { useBookInfiniteSearch } from "@/feature/books/queries";
 import type { BookSearchResponse } from "@/feature/books/type";
 import { BookStatusModal } from "@/feature/bookshelf/components/BookStatusModal";
 import { ReviewRedirectModal } from "@/feature/bookshelf/components/ReviewRedirectModal";
 import { useAddBook } from "@/feature/bookshelf/queries";
 import { BookStatus } from "@/feature/bookshelf/type";
+import { useIntersectionObserver } from "@/shared/hooks/useIntersectionObserver";
+import { useModal } from "@/shared/hooks/useModal";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function BookSearchPage() {
   const router = useRouter();
+  const { open } = useModal();
+
   const [query, setQuery] = useState("");
+
   const {
     data,
     isFetching,
@@ -30,48 +34,34 @@ export default function BookSearchPage() {
   }, hasNextPage);
 
   const books = data?.pages.flat() ?? [];
-  const { mutate: addBook, isPending: isAdding } = useAddBook();
 
-  const [selectedBook, setSelectedBook] = useState<BookSearchResponse | null>(
-    null
-  );
-  const [modalOpen, setModalOpen] = useState(false);
-  const [redirectModalOpen, setRedirectModalOpen] = useState(false);
-  const [newBookId, setNewBookId] = useState<number | null>(null);
+  const { mutate: addBook, isPending: isAdding } = useAddBook();
 
   const handleSearch = () => {
     if (!query.trim()) return;
     refetch();
   };
 
-  const handleOpenModal = (book: BookSearchResponse) => {
-    setSelectedBook(book);
-    setModalOpen(true);
-  };
-
-  const handleSelectStatus = (status: BookStatus) => {
-    if (!selectedBook) return;
-
-    setModalOpen(false);
-    setSelectedBook(null);
-
+  const handleSelectStatus = (book: BookSearchResponse, status: BookStatus) => {
     addBook(
       {
-        isbn: selectedBook.isbn,
-        title: selectedBook.title,
-        author: selectedBook.author,
-        imageUrl: selectedBook.imageUrl,
-        description: selectedBook.description,
+        isbn: book.isbn,
+        title: book.title,
+        author: book.author,
+        imageUrl: book.imageUrl,
+        description: book.description,
         status,
       },
       {
         onSuccess: (data) => {
           if (status === "DONE") {
-            setNewBookId(data.id);
-            setRedirectModalOpen(true);
+            open(() => (
+              <ReviewRedirectModal
+                onConfirm={() => router.push(`/bookshelf/${data.id}`)}
+              />
+            ));
           } else {
             alert("내 책장에 등록되었습니다 📚");
-            setSelectedBook(null);
           }
         },
         onError: () => {
@@ -79,6 +69,14 @@ export default function BookSearchPage() {
         },
       }
     );
+  };
+
+  const handleOpenModal = (book: BookSearchResponse) => {
+    open(() => (
+      <BookStatusModal
+        onSelect={(status) => handleSelectStatus(book, status)}
+      />
+    ));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -132,15 +130,16 @@ export default function BookSearchPage() {
                 onClick={() => handleOpenModal(book)}
                 disabled={isAdding}
                 className="self-center px-4 py-2 text-sm rounded-md border 
-    border-[rgb(var(--primary-sage))] 
-    text-[rgb(var(--primary-sage))] 
-    hover:bg-[rgb(var(--accent-cream))]"
+                border-[rgb(var(--primary-sage))] 
+                text-[rgb(var(--primary-sage))] 
+                hover:bg-[rgb(var(--accent-cream))]"
               >
                 등록하기
               </button>
             </li>
           ))}
         </ul>
+
         <div
           ref={observerRef}
           className="h-20 flex items-center justify-center"
@@ -148,26 +147,11 @@ export default function BookSearchPage() {
           {isFetchingNextPage && (
             <p className="text-gray-500">데이터를 더 불러오는 중...</p>
           )}
+
           {!hasNextPage && books.length > 0 && (
             <p className="text-gray-400 text-sm">마지막 결과입니다.</p>
           )}
         </div>
-        <BookStatusModal
-          open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          onSelect={handleSelectStatus}
-        />
-        <ReviewRedirectModal
-          open={redirectModalOpen}
-          onConfirm={() => {
-            if (newBookId) router.push(`/bookshelf/${newBookId}`);
-          }}
-          onClose={() => {
-            setRedirectModalOpen(false);
-            setSelectedBook(null);
-            alert("책장에 등록되었어요!");
-          }}
-        />
       </div>
     </div>
   );
