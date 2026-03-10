@@ -95,7 +95,7 @@ export function TasteRecommendation({
                   <p className="text-[11px] text-[#9CA3AF] mb-1">
                     {item.book.author}
                   </p>
-                  <p className="text-[10px] text-[#7C857E] line-clamp-1">
+                  <p className="text-[11px] text-[#7C857E] line-clamp-2 leading-relaxed">
                     {item.reason}
                   </p>
                 </div>
@@ -116,9 +116,7 @@ export function TasteRecommendation({
 
       <section>
         <div className="flex items-center gap-2 mb-4">
-          <div className="p-1.5 bg-[#A6BCAF]/10 rounded-lg">
-            <Compass size={14} className="text-[#A6BCAF]" />
-          </div>
+          <Compass size={16} className="text-[#7C9885]" />
           <h2 className="text-[15px] font-bold text-[#3F3F3F]">새로운 시도</h2>
           <span className="text-[10px] bg-[#A6BCAF]/10 text-[#A6BCAF] px-2 py-0.5 rounded-full font-bold">
             Challenge
