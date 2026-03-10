@@ -30,3 +30,8 @@ export interface BookshelfItemResponse {
   aiComment?: string | null;
   book: BookItem;
 }
+
+export interface DeleteBookshelfResponse {
+  success: boolean;
+  count: number;
+}

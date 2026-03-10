@@ -3,7 +3,7 @@
 import { ChevronLeft } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode } from "react";
-import { BottomNav } from "../components/layout/BottomNav";
+import { BottomNav } from "../../shared/components/layout/BottomNav";
 
 interface MainLayoutProps {
   children: ReactNode;

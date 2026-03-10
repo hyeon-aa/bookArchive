@@ -2,6 +2,7 @@ import { api } from "@/lib/api";
 import type {
   BookshelfItemResponse,
   BookStatus,
+  DeleteBookshelfResponse,
   UpdateBookshelfRequest,
 } from "./type";
 
@@ -33,6 +34,13 @@ export const bookshelfApi = {
       `/bookshelf/${id}`,
       body
     );
+    return data;
+  },
+
+  deleteBooks: async (bookshelfIds: number[]) => {
+    const data = await api.delete<DeleteBookshelfResponse>("/bookshelf/batch", {
+      bookshelfIds,
+    });
     return data;
   },
 };

@@ -38,5 +38,6 @@ export const api = {
   post: <T>(url: string, body?: unknown) => axiosInstance.post<T, T>(url, body),
   patch: <T>(url: string, body?: unknown) =>
     axiosInstance.patch<T, T>(url, body),
-  delete: <T>(url: string) => axiosInstance.delete<T, T>(url),
+  delete: <T>(url: string, body?: unknown) =>
+    axiosInstance.delete<T, T>(url, { data: body }),
 };

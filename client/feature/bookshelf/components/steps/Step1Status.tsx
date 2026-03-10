@@ -1,5 +1,5 @@
-import { BOOK_STATUS } from "@/app/constants/book_status";
 import { BookStatus, UpdateBookshelfRequest } from "@/feature/bookshelf/type";
+import { BOOK_STATUS } from "@/shared/constants/book_status";
 import { DateField } from "./DateField";
 import { FunnelStepLayout } from "./FunnelStepLayout";
 

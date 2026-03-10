@@ -1,6 +1,6 @@
 "use client";
 
-import { BOTTOM_NAV_ITEMS } from "@/app/constants/bottom_nav";
+import { BOTTOM_NAV_ITEMS } from "@/shared/constants/bottom_nav";
 import { usePathname, useRouter } from "next/navigation";
 
 export function BottomNav() {

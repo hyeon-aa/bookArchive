@@ -1,6 +1,6 @@
 "use client";
 
-import { EMOTION_EMOJIS } from "@/app/constants/emotion";
+import { EMOTION_EMOJIS } from "@/shared/constants/emotion";
 import Image from "next/image";
 import type { BookshelfItemResponse } from "../type";
 import { BookStatusBadge } from "./BookStatusBadge";

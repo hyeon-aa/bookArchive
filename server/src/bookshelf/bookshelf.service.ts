@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common'; // NotFoundException 추가!
+import { Prisma } from '@prisma/client';
 import { aiService } from 'src/ai/ai.service';
 import { EmbeddingService } from 'src/embedding/embedding.service';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -216,5 +217,36 @@ export class BookshelfService {
   `;
 
     return similarBooks;
+  }
+
+  async deleteBooks(userId: number, bookshelfIds: number[]) {
+    return this.prisma.$transaction(async (tx) => {
+      const items = await tx.bookshelf.findMany({
+        where: {
+          id: { in: bookshelfIds },
+          userId,
+        },
+        select: { bookId: true },
+      });
+
+      if (items.length === 0) {
+        throw new NotFoundException('삭제할 책을 찾을 수 없습니다.');
+      }
+
+      const bookIds = items.map((i) => i.bookId);
+      const { count } = await tx.bookshelf.deleteMany({
+        where: {
+          id: { in: bookshelfIds },
+          userId,
+        },
+      });
+      await tx.$executeRaw`
+        DELETE FROM "BookEmbedding"
+        WHERE "userId" = ${userId}
+        AND "bookId" IN (${Prisma.join(bookIds)})
+      `;
+
+      return { success: true, count };
+    });
   }
 }

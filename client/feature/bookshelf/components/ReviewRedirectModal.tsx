@@ -1,15 +1,14 @@
 "use client";
 
+import { useModal } from "@/shared/hooks/useModal";
 import { Sparkles } from "lucide-react";
 
 type Props = {
-  open: boolean;
-  onClose: () => void;
   onConfirm: () => void;
 };
 
-export function ReviewRedirectModal({ open, onClose, onConfirm }: Props) {
-  if (!open) return null;
+export function ReviewRedirectModal({ onConfirm }: Props) {
+  const { close } = useModal();
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] p-4 animate-in fade-in duration-200">
@@ -21,6 +20,7 @@ export function ReviewRedirectModal({ open, onClose, onConfirm }: Props) {
         <h2 className="text-xl font-bold mb-2 text-[#333]">
           완독을 축하드려요! 🎉
         </h2>
+
         <p className="text-gray-500 text-sm leading-relaxed mb-8">
           책을 읽으며 느꼈던 소중한 감정들을
           <br />
@@ -29,13 +29,19 @@ export function ReviewRedirectModal({ open, onClose, onConfirm }: Props) {
 
         <div className="flex flex-col gap-3">
           <button
-            onClick={onConfirm}
+            onClick={() => {
+              onConfirm();
+              close();
+            }}
             className="w-full py-4 bg-[#7C9885] text-white rounded-2xl font-bold shadow-lg shadow-[#7C9885]/20 hover:bg-[#6B8573] transition-all"
           >
             지금 바로 기록하기
           </button>
+
           <button
-            onClick={onClose}
+            onClick={() => {
+              close();
+            }}
             className="w-full py-4 text-gray-400 font-medium hover:text-gray-600 transition-colors"
           >
             나중에 할래요
