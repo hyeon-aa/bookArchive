@@ -12,7 +12,7 @@ export default function BookshelfPage() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const { open, close } = useModal();
+  const { open } = useModal();
 
   const { data: books = [], isLoading } = useMyBooks();
 
