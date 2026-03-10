@@ -35,4 +35,9 @@ export const bookshelfApi = {
     );
     return data;
   },
+
+  deleteBooks: async (bookshelfIds: number[]) => {
+    const data = await api.delete("/bookshelf/batch", { bookshelfIds });
+    return data;
+  },
 };

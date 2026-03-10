@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { exploreKeys } from "../explore/keys";
 import { bookshelfApi } from "./api";
 import { bookshelfKeys } from "./keys";
 import { BookshelfItemResponse, UpdateBookshelfRequest } from "./type";
@@ -36,6 +37,19 @@ export const useUpdateBook = (id: number) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookshelfKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: bookshelfKeys.lists() });
+    },
+  });
+};
+
+export const useDeleteBooks = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (bookshelfIds: number[]) =>
+      bookshelfApi.deleteBooks(bookshelfIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookshelfKeys.all });
+      queryClient.invalidateQueries({ queryKey: exploreKeys.taste() });
     },
   });
 };
