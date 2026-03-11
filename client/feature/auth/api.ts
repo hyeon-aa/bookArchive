@@ -1,5 +1,10 @@
 import { api } from "../../lib/api";
-import { LoginRequest, LoginResponse, SignUpRequest } from "./type";
+import {
+  LoginRequest,
+  LoginResponse,
+  SignUpRequest,
+  UserResponse,
+} from "./type";
 
 export const authApi = {
   login: async (body: LoginRequest) => {
@@ -15,5 +20,10 @@ export const authApi = {
 
   signUp: async (body: SignUpRequest): Promise<void> => {
     await api.post("/auth/signup", body);
+  },
+
+  getUserInfo: async () => {
+    const data = await api.get<UserResponse>("auth/me");
+    return data;
   },
 };
