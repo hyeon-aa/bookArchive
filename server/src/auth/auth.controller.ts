@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
+  Req,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -9,6 +12,14 @@ import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { UserInfoDto } from './dto/user-info.dto';
+import { JwtAuthGuard } from './jwt-auth-guard';
+
+interface AuthRequest extends Request {
+  user: {
+    userId: number;
+  };
+}
 
 @Controller('auth')
 export class AuthController {
@@ -24,5 +35,11 @@ export class AuthController {
   @UsePipes(new ValidationPipe())
   async login(@Body() loginUserDto: LoginUserDto): Promise<LoginResponseDto> {
     return await this.usersService.login(loginUserDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getMe(@Req() req: AuthRequest): Promise<UserInfoDto> {
+    return await this.usersService.getMe(req.user.userId);
   }
 }

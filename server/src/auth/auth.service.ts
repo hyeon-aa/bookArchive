@@ -8,6 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { UserInfoDto } from './dto/user-info.dto';
 
 @Injectable()
 export class AuthService {
@@ -65,7 +66,25 @@ export class AuthService {
         id: user.id.toString(),
         email: user.email,
         nickname: user.name || '',
+        isMember: user.isMember,
       },
+    };
+  }
+
+  async getMe(userId: number): Promise<UserInfoDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('존재하지 않는 사용자입니다.');
+    }
+
+    return {
+      id: user.id.toString(),
+      email: user.email,
+      nickname: user.name || '',
+      isMember: user.isMember,
     };
   }
 }
