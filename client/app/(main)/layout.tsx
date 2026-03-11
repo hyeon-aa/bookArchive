@@ -1,5 +1,7 @@
 "use client";
 
+import { useAuthStore } from "@/shared/store/useAuthStore";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode } from "react";
@@ -12,9 +14,21 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { isLoggedIn, setLogout } = useAuthStore();
+  const queryClient = useQueryClient();
 
   const needsBackButton =
     pathname.startsWith("/bookshelf/") && pathname !== "/bookshelf";
+
+  const handleClickLogin = () => {
+    if (isLoggedIn) {
+      setLogout();
+      queryClient.clear();
+      router.push("/");
+    } else {
+      router.push("/login");
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen max-w-md mx-auto bg-white">
@@ -35,10 +49,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
           )}
 
           <button
-            onClick={() => router.push("/login")}
+            onClick={handleClickLogin}
             className="text-sm font-medium text-[rgb(var(--primary-sage))] hover:text-[rgb(var(--secondary-sage-light))] active:opacity-80 transition-colors"
           >
-            로그인
+            {isLoggedIn ? "로그아웃" : "로그인"}
           </button>
         </div>
       </header>

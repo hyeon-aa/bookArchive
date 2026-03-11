@@ -1,8 +1,10 @@
 "use client";
 
 import { usePaymentMutation } from "@/feature/payment/queries";
+import { useAuthStore } from "@/shared/store/useAuthStore";
 
 export function MembershipBanner() {
+  const { user, isLoggedIn } = useAuthStore();
   const { mutateAsync: requestPayment, isPending: isPaying } =
     usePaymentMutation();
 
@@ -13,6 +15,10 @@ export function MembershipBanner() {
       console.error("결제 준비 중 오류:", err);
     }
   };
+
+  if (isLoggedIn && user?.isMember) {
+    return null;
+  }
 
   return (
     <section className="rounded-2xl bg-[#F4F7F5] p-6 shadow-sm border border-[#E2E8E5]">

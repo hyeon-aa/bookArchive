@@ -1,12 +1,15 @@
 "use client";
 
+import { authKeys } from "@/feature/auth/keys";
 import { paymentApi } from "@/feature/payment/api";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 export function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const confirmPayment = async () => {
@@ -22,6 +25,8 @@ export function PaymentSuccessContent() {
           orderId,
           amount,
         });
+
+        await queryClient.invalidateQueries({ queryKey: authKeys.user() });
       } catch (error) {
         console.error("결제 승인 중 오류 발생:", error);
       }
