@@ -52,13 +52,16 @@ export class PaymentService {
         console.error('[Toss Error]', errorMessage);
         throw new BadRequestException(errorMessage);
       }
+      await this.prisma.$transaction(async (tx) => {
+        const updatedPayment = await tx.payment.update({
+          where: { orderId },
+          data: { paymentKey, status: 'DONE' },
+        });
 
-      await this.prisma.payment.update({
-        where: { orderId },
-        data: {
-          paymentKey,
-          status: 'DONE',
-        },
+        await tx.user.update({
+          where: { id: updatedPayment.userId },
+          data: { isMember: true },
+        });
       });
 
       return result;
