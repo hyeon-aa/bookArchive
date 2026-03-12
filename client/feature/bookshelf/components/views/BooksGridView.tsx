@@ -43,8 +43,8 @@ export const BooksGridView = ({
               src={item.book.imageUrl}
               alt={item.book.title}
               fill
-              sizes="33vw"
-              className="object-cover"
+              sizes="100px"
+              className="object-cover h-auto"
             />
             {isEditMode ? (
               <div

@@ -18,7 +18,8 @@ export function BookshelfItem({ item }: { item: BookshelfItemResponse }) {
           src={item.book.imageUrl}
           alt={item.book.title}
           fill
-          className="object-cover"
+          sizes="100px"
+          className="object-cover h-auto"
         />
       </div>
 
