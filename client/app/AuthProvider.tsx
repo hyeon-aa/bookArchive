@@ -10,11 +10,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: serverUser, isError } = useGetMe();
 
   useEffect(() => {
-    if (serverUser) {
-      const token = (getCookie("accessToken") as string) || "";
-      setLogin(serverUser, token);
+    const token = getCookie("accessToken");
+
+    if (!token) {
+      setLogout();
+      return;
     }
-  }, [serverUser, setLogin]);
+
+    if (serverUser) {
+      setLogin(serverUser, String(token));
+    }
+  }, [serverUser, setLogin, setLogout]);
 
   useEffect(() => {
     if (isError) {
