@@ -30,3 +30,8 @@ export interface TasteRecommendResponse {
   familiarBooks: RecommendedBook[];
   challengeBooks: RecommendedBook[];
 }
+
+export interface AIRecommendResponse {
+  reason: string;
+  books: RecommendBookItemResponse[];
+}
