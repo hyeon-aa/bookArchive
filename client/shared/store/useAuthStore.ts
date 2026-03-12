@@ -1,3 +1,4 @@
+import { deleteCookie, setCookie } from "cookies-next";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -21,11 +22,16 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isLoggedIn: false,
       setLogin: (user, token) => {
-        localStorage.setItem("accessToken", token);
+        setCookie("accessToken", token, {
+          maxAge: 60 * 60 * 24 * 7,
+          path: "/",
+          secure: false,
+          sameSite: "lax",
+        });
         set({ user, isLoggedIn: true });
       },
       setLogout: () => {
-        localStorage.removeItem("accessToken");
+        deleteCookie("accessToken");
         set({ user: null, isLoggedIn: false });
       },
     }),

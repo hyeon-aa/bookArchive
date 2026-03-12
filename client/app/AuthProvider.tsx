@@ -2,6 +2,7 @@
 
 import { useGetMe } from "@/feature/auth/queries";
 import { useAuthStore } from "@/shared/store/useAuthStore";
+import { getCookie } from "cookies-next";
 import { useEffect } from "react";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -10,7 +11,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (serverUser) {
-      setLogin(serverUser, localStorage.getItem("accessToken") || "");
+      const token = (getCookie("accessToken") as string) || "";
+      setLogin(serverUser, token);
     }
   }, [serverUser, setLogin]);
 

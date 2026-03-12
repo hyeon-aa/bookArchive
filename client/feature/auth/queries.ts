@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getCookie } from "cookies-next";
 import { authApi } from "./api";
 import { authKeys } from "./keys";
 import { LoginRequest, SignUpRequest } from "./type";
@@ -27,7 +28,6 @@ export const useGetMe = () => {
   return useQuery({
     queryKey: authKeys.user(),
     queryFn: () => authApi.getUserInfo(),
-    enabled:
-      typeof window !== "undefined" && !!localStorage.getItem("accessToken"),
+    enabled: typeof window !== "undefined" && !!getCookie("accessToken"),
   });
 };

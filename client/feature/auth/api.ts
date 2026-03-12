@@ -9,12 +9,6 @@ import {
 export const authApi = {
   login: async (body: LoginRequest) => {
     const data = await api.post<LoginResponse>("/auth/login", body);
-
-    if (typeof window !== "undefined") {
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("user", JSON.stringify(data.user));
-    }
-
     return data;
   },
 
