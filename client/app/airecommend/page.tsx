@@ -1,6 +1,7 @@
 "use client";
 
 import { useRecommendByEmotion } from "@/feature/explore/queries";
+import { useRecommendStore } from "@/shared/store/useRecommendStore";
 import { BookOpen } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -11,6 +12,7 @@ export default function AIRecommendPage() {
   const [todayMood, setTodayMood] = useState("");
   const [wantMood, setWantMood] = useState("");
   const { mutate: recommend, isPending } = useRecommendByEmotion();
+  const { setResult } = useRecommendStore();
 
   const router = useRouter();
 
@@ -22,11 +24,8 @@ export default function AIRecommendPage() {
       {
         onSuccess: (response) => {
           if (response) {
-            router.push(
-              `/airecommend/result?data=${encodeURIComponent(
-                JSON.stringify(response)
-              )}`
-            );
+            setResult(response);
+            router.push(`/airecommend/result`);
           }
         },
         onError: (error) => {

@@ -3,23 +3,14 @@
 import { bookshelfApi } from "@/feature/bookshelf/api";
 import { BookStatus } from "@/feature/bookshelf/type";
 import { RecommendBookItemResponse } from "@/feature/explore/type";
+import { useRecommendStore } from "@/shared/store/useRecommendStore";
 import { ArrowLeft, BookOpen, Info, Plus, RefreshCcw } from "lucide-react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
-
-interface RecommendResult {
-  reason: string;
-  books: RecommendBookItemResponse[];
-}
+import { useRouter } from "next/navigation";
 
 export default function RecommendResultContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const dataRaw = searchParams.get("data");
-  const result: RecommendResult | null = dataRaw
-    ? JSON.parse(decodeURIComponent(dataRaw))
-    : null;
+  const { result, clearResult } = useRecommendStore();
 
   if (!result) {
     return (
@@ -50,6 +41,11 @@ export default function RecommendResultContent() {
       console.error(e);
       alert("책장 등록에 실패했어요.");
     }
+  };
+
+  const handleBack = () => {
+    clearResult();
+    router.back();
   };
 
   return (
@@ -125,7 +121,7 @@ export default function RecommendResultContent() {
 
       <div className="mt-12">
         <button
-          onClick={() => router.back()}
+          onClick={handleBack}
           className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-white border border-[#F3F4F6] text-[#9CA3AF] text-[13px] font-medium transition-all hover:bg-[#F9FAFB]"
         >
           <RefreshCcw size={15} /> 다시 추천받기
