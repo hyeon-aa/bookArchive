@@ -2,6 +2,7 @@
 
 import { bookshelfApi } from "@/feature/bookshelf/api";
 import { BookStatus } from "@/feature/bookshelf/type";
+import { useRecommendByEmotion } from "@/feature/explore/queries";
 import { RecommendBookItemResponse } from "@/feature/explore/type";
 import { useRecommendStore } from "@/shared/store/useRecommendStore";
 import { ArrowLeft, BookOpen, Info, Plus, RefreshCcw } from "lucide-react";
@@ -10,7 +11,8 @@ import { useRouter } from "next/navigation";
 
 export default function RecommendResultContent() {
   const router = useRouter();
-  const { result, clearResult } = useRecommendStore();
+  const { result, payload, setResult } = useRecommendStore();
+  const { mutate: recommend, isPending } = useRecommendByEmotion();
 
   if (!result) {
     return (
@@ -43,9 +45,19 @@ export default function RecommendResultContent() {
     }
   };
 
-  const handleBack = () => {
-    clearResult();
-    router.back();
+  const handleRetry = () => {
+    if (!payload) return;
+
+    recommend(payload, {
+      onSuccess: (response) => {
+        if (response) {
+          setResult(response);
+        }
+      },
+      onError: (error) => {
+        console.error("추천 실패:", error);
+      },
+    });
   };
 
   return (
@@ -121,10 +133,11 @@ export default function RecommendResultContent() {
 
       <div className="mt-12">
         <button
-          onClick={handleBack}
+          onClick={handleRetry}
           className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-white border border-[#F3F4F6] text-[#9CA3AF] text-[13px] font-medium transition-all hover:bg-[#F9FAFB]"
         >
-          <RefreshCcw size={15} /> 다시 추천받기
+          <RefreshCcw size={15} />{" "}
+          {isPending ? "AI가 다시 추천 중이에요..." : "다시 추천받기"}
         </button>
       </div>
     </main>
