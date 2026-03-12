@@ -1,16 +1,11 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth-guard';
+import { CurrentUser } from 'src/common/decorators/user.decorator';
 import { AirecommendService } from './airecommend.service';
 import {
   AiRecommendRequestDto,
   AITasteRecommendResponseDto,
 } from './dto/ai-recommend.dto';
-
-interface AuthRequest extends Request {
-  user: {
-    userId: number;
-  };
-}
 
 @Controller('ai-recommend')
 export class AirecommendController {
@@ -29,8 +24,8 @@ export class AirecommendController {
   @Get('taste')
   @UseGuards(JwtAuthGuard)
   async getTasteRecommendations(
-    @Req() req: AuthRequest,
+    @CurrentUser('userId') userId: number,
   ): Promise<AITasteRecommendResponseDto> {
-    return this.service.getTasteRecommendations(req.user.userId);
+    return this.service.getTasteRecommendations(userId);
   }
 }

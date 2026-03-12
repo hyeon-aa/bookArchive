@@ -6,21 +6,14 @@ import {
   Param,
   Patch,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
-import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth-guard';
+import { CurrentUser } from '../common/decorators/user.decorator'; // 데코레이터 임포트
 import { BookshelfService } from './bookshelf.service';
 import { AddBookDto } from './dto/add-book.dto';
 import { DeleteBookshelfDto } from './dto/delete-bookshelf.dto';
 import { UpdateBookshelfDto } from './dto/update-bookshelf.dto';
-
-interface AuthRequest extends Request {
-  user: {
-    userId: number;
-  };
-}
 
 @Controller('bookshelf')
 @UseGuards(JwtAuthGuard)
@@ -28,31 +21,37 @@ export class BookshelfController {
   constructor(private readonly service: BookshelfService) {}
 
   @Post()
-  add(@Req() req: AuthRequest, @Body() dto: AddBookDto) {
-    return this.service.addBook(req.user.userId, dto);
+  add(@CurrentUser('userId') userId: number, @Body() dto: AddBookDto) {
+    return this.service.addBook(userId, dto);
   }
 
   @Get()
-  getMyBooks(@Req() req: AuthRequest) {
-    return this.service.getMyBooks(req.user.userId);
+  getMyBooks(@CurrentUser('userId') userId: number) {
+    return this.service.getMyBooks(userId);
   }
 
   @Get(':id')
-  getBookshelfItem(@Req() req: AuthRequest, @Param('id') id: string) {
-    return this.service.getBookshelfItem(Number(id), req.user.userId);
+  getBookshelfItem(
+    @CurrentUser('userId') userId: number,
+    @Param('id') id: string,
+  ) {
+    return this.service.getBookshelfItem(Number(id), userId);
   }
 
   @Patch(':id')
   update(
-    @Req() req: AuthRequest,
+    @CurrentUser('userId') userId: number,
     @Param('id') id: string,
     @Body() dto: UpdateBookshelfDto,
   ) {
-    return this.service.updateBookshelf(Number(id), req.user.userId, dto);
+    return this.service.updateBookshelf(Number(id), userId, dto);
   }
 
   @Delete('batch')
-  async deleteBooks(@Req() req: AuthRequest, @Body() dto: DeleteBookshelfDto) {
-    return await this.service.deleteBooks(req.user.userId, dto.bookshelfIds);
+  async deleteBooks(
+    @CurrentUser('userId') userId: number,
+    @Body() dto: DeleteBookshelfDto,
+  ) {
+    return await this.service.deleteBooks(userId, dto.bookshelfIds);
   }
 }

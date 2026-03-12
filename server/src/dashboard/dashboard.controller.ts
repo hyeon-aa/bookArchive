@@ -1,12 +1,7 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth-guard';
+import { CurrentUser } from 'src/common/decorators/user.decorator';
 import { DashboardService } from './dashboard.service';
-
-interface AuthRequest extends Request {
-  user: {
-    userId: number;
-  };
-}
 
 @Controller('dashboard')
 export class DashboardController {
@@ -14,7 +9,7 @@ export class DashboardController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async getDashboard(@Req() req: AuthRequest) {
-    return this.dashboardService.getDashboard(req.user.userId);
+  async getDashboard(@CurrentUser('userId') userId: number) {
+    return this.dashboardService.getDashboard(userId);
   }
 }

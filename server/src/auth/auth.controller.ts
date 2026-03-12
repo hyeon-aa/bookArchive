@@ -3,23 +3,17 @@ import {
   Controller,
   Get,
   Post,
-  Req,
   UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { CurrentUser } from 'src/common/decorators/user.decorator';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UserInfoDto } from './dto/user-info.dto';
 import { JwtAuthGuard } from './jwt-auth-guard';
-
-interface AuthRequest extends Request {
-  user: {
-    userId: number;
-  };
-}
 
 @Controller('auth')
 export class AuthController {
@@ -39,7 +33,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async getMe(@Req() req: AuthRequest): Promise<UserInfoDto> {
-    return await this.usersService.getMe(req.user.userId);
+  async getMe(@CurrentUser('userId') userId: number): Promise<UserInfoDto> {
+    return await this.usersService.getMe(userId);
   }
 }
