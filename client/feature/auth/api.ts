@@ -17,7 +17,7 @@ export const authApi = {
   },
 
   getUserInfo: async () => {
-    const data = await api.get<UserResponse>("auth/me");
+    const data = await api.get<UserResponse>("/auth/me");
     return data;
   },
 };
