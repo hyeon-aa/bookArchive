@@ -118,6 +118,7 @@ export default function BookSearchPage() {
                 alt={book.title}
                 width={80}
                 height={112}
+                style={{ height: "auto" }}
                 className="object-cover rounded"
               />
 

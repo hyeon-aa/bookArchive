@@ -13,11 +13,12 @@ export function BookshelfItem({ item }: { item: BookshelfItemResponse }) {
 
   return (
     <div className="flex gap-5 p-5 bg-white rounded-[2rem] shadow-sm border border-[#F5F0E6] transition-all active:scale-[0.98] hover:shadow-md relative overflow-hidden">
-      <div className="relative w-25 h-35 flex-shrink-0 shadow-lg rounded-lg overflow-hidden border border-gray-100">
+      <div className="relative w-[98px] h-[138px] flex-shrink-0 shadow-lg rounded-lg overflow-hidden border border-gray-100">
         <Image
-          src={item.book.imageUrl}
+          src={item.book.imageUrl || "/placeholder-book.png"}
           alt={item.book.title}
           fill
+          sizes="98px"
           className="object-cover"
         />
       </div>

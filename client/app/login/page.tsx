@@ -2,12 +2,14 @@
 
 import { useLogin } from "@/feature/auth/queries";
 import { LoginRequest } from "@/feature/auth/type";
+import { useAuthStore } from "@/shared/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { AuthLayout } from "../(auth)/AuthLayout";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setLogin } = useAuthStore();
   const { mutate: login, isPending } = useLogin();
 
   const {
@@ -23,7 +25,8 @@ export default function LoginPage() {
 
   const onSubmit = (data: LoginRequest) => {
     login(data, {
-      onSuccess: () => {
+      onSuccess: (res) => {
+        setLogin(res.user, res.accessToken);
         router.push("/");
       },
       onError: (error) => {

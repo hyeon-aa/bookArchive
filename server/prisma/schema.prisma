@@ -18,6 +18,7 @@ model User {
   email     String   @unique
   password  String
   name      String?
+  isMember  Boolean  @default(false)
   createdAt DateTime @default(now())
   bookshelf Bookshelf[]
   payments  Payment[]

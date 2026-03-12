@@ -1,11 +1,8 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth-guard';
+import { CurrentUser } from 'src/common/decorators/user.decorator';
 import { ConfirmPaymentDto } from './dto/payment.dto';
 import { PaymentService } from './payment.service';
-
-interface AuthRequest extends Request {
-  user: { userId: number };
-}
 
 @Controller('payments')
 export class PaymentController {
@@ -13,8 +10,8 @@ export class PaymentController {
 
   @UseGuards(JwtAuthGuard)
   @Post('ready')
-  async ready(@Req() req: AuthRequest) {
-    const payment = await this.paymentService.createReady(req.user.userId);
+  async ready(@CurrentUser('userId') userId: number) {
+    const payment = await this.paymentService.createReady(userId);
 
     return {
       orderId: payment.orderId,

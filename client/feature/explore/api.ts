@@ -1,13 +1,13 @@
 import { api } from "@/lib/api";
 import {
+  AIRecommendResponse,
   DailyQuoteResponse,
-  RecommendBookItemResponse,
   TasteRecommendResponse,
 } from "./type";
 
 export const exploreApi = {
   recommendByEmotion: async (currentMood: string, userTalk: string) => {
-    const data = await api.post<RecommendBookItemResponse[]>("/ai-recommend", {
+    const data = await api.post<AIRecommendResponse>("/ai-recommend", {
       currentMood,
       userTalk,
     });

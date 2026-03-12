@@ -78,8 +78,8 @@ export function TasteRecommendation({
                 <Image
                   src={item.book.imageUrl || "/placeholder-book.png"}
                   alt={item.book.title}
+                  sizes="98px"
                   fill
-                  sizes="56px"
                   className="rounded object-cover shadow-sm"
                 />
                 <div className="absolute -top-1 -right-1 bg-[#7C9885] rounded-full p-1">
@@ -132,6 +132,7 @@ export function TasteRecommendation({
                 <Image
                   src={item.book.imageUrl || "/placeholder-book.png"}
                   alt={item.book.title}
+                  sizes="98px"
                   fill
                   className="rounded-lg object-cover"
                 />
