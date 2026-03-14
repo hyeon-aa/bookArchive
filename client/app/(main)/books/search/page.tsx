@@ -67,9 +67,9 @@ export default function BookSearchPage() {
             }
           };
 
-          if (data.isLevelUp) {
+          if (data?.isLevelUp === true) {
             open(() => (
-              <LevelUpModal level={data.newLevel} onNext={showReviewModal} />
+              <LevelUpModal level={data.newLevel!} onNext={showReviewModal} />
             ));
           } else {
             showReviewModal();

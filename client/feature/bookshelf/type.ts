@@ -32,9 +32,9 @@ export interface BookshelfItemResponse {
 }
 
 export interface BookshelfItemWithLevelResponse extends BookshelfItemResponse {
-  isLevelUp: boolean;
-  currentCount: number;
-  newLevel: number;
+  isLevelUp?: boolean;
+  currentCount?: number;
+  newLevel?: number;
 }
 
 export interface DeleteBookshelfResponse {
