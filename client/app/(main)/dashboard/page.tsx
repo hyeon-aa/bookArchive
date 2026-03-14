@@ -10,13 +10,17 @@ import { useDashboardStats } from "@/feature/dashboard/queries";
 import { MembershipBanner } from "@/feature/payment/components/MembershipBanner";
 
 export default function DashboardPage() {
-  const { data, error } = useDashboardStats();
+  const { data, isLoading, error } = useDashboardStats();
   const { data: userInfoData } = useGetMe();
 
   if (error)
     return (
       <div className="p-10 text-center text-red-500">데이터 로드 실패</div>
     );
+
+  if (isLoading) {
+    return <div className="p-10 text-center text-gray-400">불러오는 중...</div>;
+  }
 
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
