@@ -1,4 +1,4 @@
-interface Props {
+interface ReadingOverViewProps {
   totalCount: number;
   doneCount: number;
   readingCount: number;
@@ -10,11 +10,9 @@ export function ReadingOverView({
   doneCount,
   readingCount,
   completionRate,
-}: Props) {
+}: ReadingOverViewProps) {
   return (
     <div className="rounded-2xl bg-gradient-to-br from-[#7C9885]/10 to-[#A6BCAF]/15 p-6 border border-[#A6BCAF]/30">
-      <p className="text-xs text-gray-500">📚 나의 독서 여정</p>
-
       <div className="mt-2 flex items-baseline gap-2">
         <span className="text-3xl font-semibold text-gray-900">
           {totalCount}

@@ -2,6 +2,7 @@
 
 import { useGetMe } from "@/feature/auth/queries";
 import { CharacterProfile } from "@/feature/dashboard/components/CharacterProfile";
+import { DashboardSection } from "@/feature/dashboard/components/DashboardSection";
 import { EmotionSummary } from "@/feature/dashboard/components/EmotionSummary";
 import { MonthlyChart } from "@/feature/dashboard/components/MonthlyChart";
 import { ReadingOverView } from "@/feature/dashboard/components/ReadingOverView";
@@ -12,13 +13,14 @@ export default function DashboardPage() {
   const { data, isLoading, error } = useDashboardStats();
   const { data: userInfoData } = useGetMe();
 
-  if (isLoading)
-    return <div className="p-10 text-center">데이터를 불러오는 중...</div>;
-
   if (error)
     return (
       <div className="p-10 text-center text-red-500">데이터 로드 실패</div>
     );
+
+  if (isLoading) {
+    return <div className="p-10 text-center text-gray-400">불러오는 중...</div>;
+  }
 
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
@@ -26,24 +28,22 @@ export default function DashboardPage() {
       <MembershipBanner />
       {data && (
         <>
-          <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <DashboardSection title="나의 독서 여정" emoji="📚">
             <ReadingOverView
               totalCount={data.totalCount}
               doneCount={data.doneCount}
               readingCount={data.readingCount}
               completionRate={data.completionRate}
             />
-          </section>
+          </DashboardSection>
 
-          <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <h3 className="text-base font-semibold mb-3">📊 월별 독서 통계</h3>
+          <DashboardSection title="월별 독서 통계" emoji="📊">
             <MonthlyChart data={data.monthlyStats} />
-          </section>
+          </DashboardSection>
 
-          <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-            <h3 className="text-base font-semibold mb-3">💬 감정 분포</h3>
+          <DashboardSection title="감정 분포" emoji="💬">
             <EmotionSummary emotionStats={data.emotionStats} />
-          </section>
+          </DashboardSection>
         </>
       )}
     </div>

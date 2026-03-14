@@ -50,6 +50,7 @@ model Bookshelf {
   createdAt DateTime   @default(now())
 
   comment   String?    // 한줄평
+  phrase   String?    // 인상깊은 문장
   emotion   String?    // 감정
   startDate DateTime?  // 시작 날짜
   endDate   DateTime?  // 완료 날짜

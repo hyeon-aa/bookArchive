@@ -12,22 +12,25 @@ import { useState } from "react";
 
 import { LevelUpModal } from "@/shared/components/common/LevelUpModal";
 import { useModal } from "@/shared/hooks/useModal";
+import { SharePreviewModal } from "./SharePreviewModal";
 import { FunnelFooter } from "./steps/FunnelFooter";
 import { Step1Status } from "./steps/Step1Status";
 import { Step2Review } from "./steps/Step2Review";
+import { Step3Phrase } from "./steps/Step3Phrase";
 
 export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
   const router = useRouter();
   const { mutate: updateBook, isPending: isSaving } = useUpdateBook(item.id);
 
   const [step, setStep] = useState(1);
-  const { open } = useModal();
+  const { open, close } = useModal();
   const [aiMessage, setAIMessage] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<UpdateBookshelfRequest>({
     status: item.status,
     comment: item.comment || "",
     emotion: item.emotion || "",
+    phrase: item.phrase || "",
     startDate: item.startDate
       ? new Date(item.startDate).toISOString().split("T")[0]
       : "",
@@ -38,10 +41,20 @@ export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
   });
 
   const isDone = formData.status === "DONE";
-  const totalSteps = isDone ? 2 : 1;
+  const totalSteps = isDone ? 3 : 1;
 
   const updateFields = (fields: Partial<UpdateBookshelfRequest>) => {
     setFormData((prev) => ({ ...prev, ...fields }));
+  };
+
+  const handleOpenShare = () => {
+    open(() => (
+      <SharePreviewModal
+        phrase={formData.phrase || ""}
+        title={item.book.title}
+        onClose={close}
+      />
+    ));
   };
 
   const handleSave = () => {
@@ -49,6 +62,7 @@ export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
       ...formData,
       comment: isDone ? formData.comment : undefined,
       emotion: isDone ? formData.emotion : undefined,
+      phrase: isDone ? formData.phrase : undefined,
       endDate: isDone ? formData.endDate : undefined,
     };
 
@@ -62,9 +76,9 @@ export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
           }
         };
 
-        if (data.isLevelUp) {
+        if (data?.isLevelUp) {
           open(() => (
-            <LevelUpModal level={data.newLevel} onNext={handleNextStep} />
+            <LevelUpModal level={data.newLevel!} onNext={handleNextStep} />
           ));
         } else {
           handleNextStep();
@@ -110,13 +124,21 @@ export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
             onChange={updateFields}
           />
         )}
+
+        {step === 3 && (
+          <Step3Phrase
+            phrase={formData.phrase || ""}
+            onChange={updateFields}
+            onOpenShare={handleOpenShare}
+          />
+        )}
       </main>
 
       <FunnelFooter
         step={step}
         totalSteps={totalSteps}
         isSaving={isSaving}
-        isValid={step === 2 ? !!formData.emotion : true}
+        isValid={step === 3 ? !!formData.emotion : true}
         onPrev={() => setStep((s) => s - 1)}
         onNext={() => setStep((s) => s + 1)}
         onSave={handleSave}

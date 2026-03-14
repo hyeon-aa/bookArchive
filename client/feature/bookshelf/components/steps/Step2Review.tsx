@@ -45,7 +45,7 @@ export function Step2Review({ emotion, comment, onChange }: Step2Props) {
         <textarea
           value={comment}
           onChange={(e) => onChange({ comment: e.target.value })}
-          placeholder="마음을 울린 문장이나 짧은 감상을 적어보세요."
+          placeholder="책을 읽고 난 후의 감상평을 적어보세요."
           className="w-full p-4 bg-[#F9FAFB] rounded-2xl min-h-[160px] text-sm outline-none focus:ring-2 ring-[#7C9885]/20 resize-none border-none placeholder:text-gray-300"
         />
       </div>

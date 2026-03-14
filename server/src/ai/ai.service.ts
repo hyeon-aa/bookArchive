@@ -60,8 +60,8 @@ export class aiService {
       ) {
         const data = parsed as { comment: string; tags: string[] };
         return {
-          comment: data.comment || '따뜻한 여운이 남는 독서였네요.',
-          tags: Array.isArray(data.tags) ? data.tags : [],
+          aiComment: data.comment || '따뜻한 여운이 남는 독서였네요.',
+          aiTags: Array.isArray(data.tags) ? data.tags : [],
         };
       }
 
@@ -72,9 +72,9 @@ export class aiService {
       console.error('[Groq Error]', errorMessage);
 
       return {
-        comment:
+        aiComment:
           '오늘의 독서는 마음속에 어떤 의미로 남았나요? 기록해주셔서 감사합니다.',
-        tags: [],
+        aiTags: [],
       };
     }
   }

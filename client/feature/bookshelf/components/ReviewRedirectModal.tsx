@@ -3,11 +3,11 @@
 import { useModal } from "@/shared/hooks/useModal";
 import { Sparkles } from "lucide-react";
 
-type Props = {
+type ReviewRedirectModalProps = {
   onConfirm: () => void;
 };
 
-export function ReviewRedirectModal({ onConfirm }: Props) {
+export function ReviewRedirectModal({ onConfirm }: ReviewRedirectModalProps) {
   const { close } = useModal();
 
   return (

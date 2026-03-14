@@ -5,11 +5,11 @@ import { BOOK_STATUS } from "@/shared/constants/book_status";
 import { useModal } from "@/shared/hooks/useModal";
 import { X } from "lucide-react";
 
-type Props = {
+type BookStatusModalProps = {
   onSelect: (status: BookStatus) => void;
 };
 
-export function BookStatusModal({ onSelect }: Props) {
+export function BookStatusModal({ onSelect }: BookStatusModalProps) {
   const { close } = useModal();
 
   return (
