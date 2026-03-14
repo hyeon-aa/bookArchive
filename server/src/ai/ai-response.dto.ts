@@ -1,6 +1,6 @@
 export class AITagResponseDto {
-  comment!: string;
-  tags!: string[];
+  aiComment!: string;
+  aiTags!: string[];
 }
 
 export class AITasteRecommendResponseDto {

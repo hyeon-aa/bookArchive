@@ -11,6 +11,10 @@ export class UpdateBookshelfDto {
 
   @IsOptional()
   @IsString()
+  phrase?: string;
+
+  @IsOptional()
+  @IsString()
   emotion?: string;
 
   @IsOptional()

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'; // NotFoundException 추가!
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { aiService } from 'src/ai/ai.service';
 import { EmbeddingService } from 'src/embedding/embedding.service';
@@ -185,6 +185,7 @@ export class BookshelfService {
       comment: item.comment,
       emotion: item.emotion,
       startDate: item.startDate,
+      phrase: item.phrase,
       endDate: item.endDate,
       createdAt: item.createdAt,
       aiComment: item.aiComment,
@@ -219,8 +220,8 @@ export class BookshelfService {
             emotion: dto.emotion ?? item.emotion ?? '',
           });
 
-        aiComment = aiResult.comment;
-        aiTags = aiResult.tags;
+        aiComment = aiResult.aiComment;
+        aiTags = aiResult.aiTags;
       } catch (error: unknown) {
         if (error instanceof Error) {
           console.error('[ai Error]', error.message);
@@ -236,6 +237,7 @@ export class BookshelfService {
         emotion: dto.emotion,
         startDate: dto.startDate ? new Date(dto.startDate) : undefined,
         endDate: dto.endDate ? new Date(dto.endDate) : undefined,
+        phrase: dto.phrase,
         aiComment,
         aiTags,
       },
