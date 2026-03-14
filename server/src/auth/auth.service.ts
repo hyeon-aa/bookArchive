@@ -85,6 +85,7 @@ export class AuthService {
       email: user.email,
       nickname: user.name || '',
       isMember: user.isMember,
+      level: user.level,
     };
   }
 }

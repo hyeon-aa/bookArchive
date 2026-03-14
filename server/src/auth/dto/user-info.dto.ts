@@ -3,4 +3,5 @@ export class UserInfoDto {
   email: string;
   nickname: string;
   isMember: boolean;
+  level: number;
 }

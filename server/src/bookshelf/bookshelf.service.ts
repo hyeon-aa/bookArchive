@@ -21,6 +21,51 @@ export class BookshelfService {
     private readonly embeddingService: EmbeddingService,
   ) {}
 
+  private async checkLevelUp(userId: number) {
+    const totalDoneCount = await this.prisma.bookshelf.count({
+      where: {
+        userId,
+        status: 'DONE',
+      },
+    });
+    let currentLevel = 1;
+    let isLevelUp = false;
+
+    switch (totalDoneCount) {
+      case 10:
+        currentLevel = 2;
+        isLevelUp = true;
+        break;
+      case 30:
+        currentLevel = 3;
+        isLevelUp = true;
+        break;
+      case 50:
+        currentLevel = 4;
+        isLevelUp = true;
+        break;
+      case 100:
+        currentLevel = 5;
+        isLevelUp = true;
+        break;
+      default:
+        isLevelUp = false;
+    }
+
+    if (isLevelUp) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { level: currentLevel },
+      });
+    }
+
+    return {
+      isLevelUp,
+      currentCount: totalDoneCount,
+      newLevel: isLevelUp ? currentLevel : undefined,
+    };
+  }
+
   async addBook(
     userId: number,
     dto: AddBookDto,
@@ -43,7 +88,7 @@ export class BookshelfService {
       });
     }
 
-    // [추가 포인트 1] 책은 이미 있어도 '임베딩'이 없는 경우가 많으므로 체크 로직 분리
+    // 책은 이미 있어도 '임베딩'이 없는 경우가 있으므로 체크 로직 분리
     const existingEmbedding = await this.prisma.$queryRaw`
       SELECT id FROM "BookEmbedding" WHERE "bookId" = ${book.id}
     `;
@@ -78,6 +123,11 @@ export class BookshelfService {
       include: { book: true },
     });
 
+    let levelUpInfo = {};
+    if (dto.status === 'DONE') {
+      levelUpInfo = await this.checkLevelUp(userId);
+    }
+
     return {
       id: bookshelf.id,
       status: bookshelf.status,
@@ -89,6 +139,7 @@ export class BookshelfService {
         imageUrl: bookshelf.book.imageUrl,
         description: bookshelf.book.description,
       },
+      ...levelUpInfo,
     };
   }
   async getMyBooks(userId: number): Promise<BookshelfResponseDto[]> {
@@ -173,7 +224,7 @@ export class BookshelfService {
       }
     }
 
-    return this.prisma.bookshelf.update({
+    const updated = await this.prisma.bookshelf.update({
       where: { id },
       data: {
         status: dto.status,
@@ -186,6 +237,16 @@ export class BookshelfService {
       },
       include: { book: true },
     });
+
+    let levelUpInfo = {};
+    if (dto.status === 'DONE' && item.status !== 'DONE') {
+      levelUpInfo = await this.checkLevelUp(userId);
+    }
+
+    return {
+      ...updated,
+      ...levelUpInfo,
+    };
   }
 
   async getSimilarBooks(
