@@ -11,15 +11,13 @@ import {
 } from "recharts";
 import { MonthlyStat } from "../type";
 
-interface Props {
+interface MonthlyStatProps {
   data: MonthlyStat[];
 }
 
-export function MonthlyChart({ data }: Props) {
+export function MonthlyChart({ data }: MonthlyStatProps) {
   return (
     <div className="rounded-2xl bg-white p-6 border border-gray-100">
-      <p className="text-xs text-gray-500 mb-4">📈 월별 완독 기록</p>
-
       <div className="w-full h-56">
         <ResponsiveContainer>
           <BarChart

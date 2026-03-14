@@ -5,50 +5,68 @@ type EmotionStat = {
   count: number;
 };
 
-interface Props {
+interface EmotionSummaryProps {
   emotionStats: EmotionStat[];
 }
 
-export function EmotionSummary({ emotionStats }: Props) {
+export function EmotionSummary({ emotionStats }: EmotionSummaryProps) {
   if (!emotionStats || emotionStats.length === 0) {
     return (
-      <div className="bg-white rounded-2xl p-6 border border-gray-100">
-        <p className="text-sm font-medium text-gray-700 mb-1">💬 감정의 기록</p>
-        <p className="text-xs text-gray-500">아직 남긴 감정이 없어요.</p>
+      <div className="py-10 text-center">
+        <p className="text-sm text-gray-400">아직 기록된 감정이 없어요.</p>
       </div>
     );
   }
 
-  const topEmotion = emotionStats[0];
   const total = emotionStats.reduce((sum, e) => sum + e.count, 0);
+  const topEmotion = emotionStats[0];
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-100 space-y-5">
-      <div>
-        <p className="text-xs text-gray-500">💬 가장 많이 남긴 감정</p>
-
-        <div className="mt-1 text-xl font-semibold text-[#7C9885]">
-          {topEmotion.emotion}
-          <span className="ml-2 text-sm text-gray-400">
-            {topEmotion.count}회
+    <div className="space-y-6">
+      <div className="bg-[#F8FAF9] rounded-2xl p-4 flex items-center justify-between">
+        <div>
+          <p className="text-[11px] font-bold text-[#7C9885] uppercase tracking-wider mb-1">
+            가장 많이 느낀 감정
+          </p>
+          <h4 className="text-lg font-bold text-gray-800">
+            {topEmotion.emotion} <span className="text-[#7C9885]"></span>
+          </h4>
+        </div>
+        <div className="text-right">
+          <span className="text-2xl font-black text-[#7C9885]/20">
+            {Math.round((topEmotion.count / total) * 100)}%
           </span>
         </div>
       </div>
 
-      <div className="space-y-3">
-        {emotionStats.map((emotion) => {
-          const percent = Math.round((emotion.count / total) * 100);
+      <div className="px-1 space-y-4">
+        {emotionStats.map((stat, index) => {
+          const percent = Math.round((stat.count / total) * 100);
+          const barColor = index === 0 ? "bg-[#7C9885]" : "bg-[#7C9885]/30";
+          const textColor =
+            index === 0 ? "font-bold text-gray-800" : "text-gray-500";
 
           return (
-            <div key={emotion.emotion}>
-              <div className="flex justify-between text-xs text-gray-500 mb-1">
-                <span>{emotion.emotion}</span>
-                <span>{percent}%</span>
+            <div key={stat.emotion} className="group">
+              <div className="flex justify-between items-end mb-1.5">
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs ${textColor}`}>{stat.emotion}</span>
+                  <span className="text-[10px] text-gray-300">
+                    {stat.count}회
+                  </span>
+                </div>
+                <span
+                  className={`text-[11px] font-medium ${
+                    index === 0 ? "text-[#7C9885]" : "text-gray-400"
+                  }`}
+                >
+                  {percent}%
+                </span>
               </div>
 
-              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2 bg-gray-50 rounded-full overflow-hidden">
                 <div
-                  className="h-1.5 bg-[#A6BCAF] rounded-full"
+                  className={`h-full ${barColor} rounded-full transition-all duration-1000 ease-out`}
                   style={{ width: `${percent}%` }}
                 />
               </div>
