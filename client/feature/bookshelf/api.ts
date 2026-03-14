@@ -1,6 +1,7 @@
 import { api } from "@/lib/api";
 import type {
   BookshelfItemResponse,
+  BookshelfItemWithLevelResponse,
   BookStatus,
   DeleteBookshelfResponse,
   UpdateBookshelfRequest,
@@ -15,7 +16,10 @@ export const bookshelfApi = {
     description: string;
     status: BookStatus;
   }) => {
-    const data = await api.post<BookshelfItemResponse>("/bookshelf", body);
+    const data = await api.post<BookshelfItemWithLevelResponse>(
+      "/bookshelf",
+      body
+    );
     return data;
   },
 
@@ -30,7 +34,7 @@ export const bookshelfApi = {
   },
 
   updateBookshelfItem: async (id: number, body: UpdateBookshelfRequest) => {
-    const data = await api.patch<BookshelfItemResponse>(
+    const data = await api.patch<BookshelfItemWithLevelResponse>(
       `/bookshelf/${id}`,
       body
     );

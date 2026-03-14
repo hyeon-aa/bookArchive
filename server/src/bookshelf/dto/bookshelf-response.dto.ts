@@ -12,3 +12,9 @@ export class BookshelfResponseDto {
   createdAt: Date;
   book: BookResponseDto;
 }
+
+export class BookshelfWithLevelResponseDto extends BookshelfResponseDto {
+  isLevelUp: boolean;
+  currentCount: number;
+  newLevel?: number;
+}

@@ -6,6 +6,7 @@ import { BookStatusModal } from "@/feature/bookshelf/components/BookStatusModal"
 import { ReviewRedirectModal } from "@/feature/bookshelf/components/ReviewRedirectModal";
 import { useAddBook } from "@/feature/bookshelf/queries";
 import { BookStatus } from "@/feature/bookshelf/type";
+import { LevelUpModal } from "@/shared/components/common/LevelUpModal";
 import { useIntersectionObserver } from "@/shared/hooks/useIntersectionObserver";
 import { useModal } from "@/shared/hooks/useModal";
 import Image from "next/image";
@@ -54,14 +55,24 @@ export default function BookSearchPage() {
       },
       {
         onSuccess: (data) => {
-          if (status === "DONE") {
+          const showReviewModal = () => {
+            if (status === "DONE") {
+              open(() => (
+                <ReviewRedirectModal
+                  onConfirm={() => router.push(`/bookshelf/${data.id}`)}
+                />
+              ));
+            } else {
+              alert("내 책장에 등록되었습니다 📚");
+            }
+          };
+
+          if (data?.isLevelUp === true) {
             open(() => (
-              <ReviewRedirectModal
-                onConfirm={() => router.push(`/bookshelf/${data.id}`)}
-              />
+              <LevelUpModal level={data.newLevel!} onNext={showReviewModal} />
             ));
           } else {
-            alert("내 책장에 등록되었습니다 📚");
+            showReviewModal();
           }
         },
         onError: () => {

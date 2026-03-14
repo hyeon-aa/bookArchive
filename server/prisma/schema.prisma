@@ -22,6 +22,7 @@ model User {
   createdAt DateTime @default(now())
   bookshelf Bookshelf[]
   payments  Payment[]
+  level     Int      @default(1)
 }
 
 enum BookStatus {

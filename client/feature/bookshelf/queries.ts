@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { authKeys } from "../auth/keys";
 import { exploreKeys } from "../explore/keys";
 import { bookshelfApi } from "./api";
 import { bookshelfKeys } from "./keys";
@@ -25,6 +26,7 @@ export const useAddBook = () => {
     mutationFn: bookshelfApi.addBook,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookshelfKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: authKeys.user() });
     },
   });
 };
@@ -37,6 +39,7 @@ export const useUpdateBook = (id: number) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookshelfKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: bookshelfKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: authKeys.user() });
     },
   });
 };

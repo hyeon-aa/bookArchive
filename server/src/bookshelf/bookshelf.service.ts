@@ -5,7 +5,10 @@ import { EmbeddingService } from 'src/embedding/embedding.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AITagResponseDto } from '../ai/ai-response.dto';
 import { AddBookDto } from './dto/add-book.dto';
-import { BookshelfResponseDto } from './dto/bookshelf-response.dto';
+import {
+  BookshelfResponseDto,
+  BookshelfWithLevelResponseDto,
+} from './dto/bookshelf-response.dto';
 import { UpdateBookshelfDto } from './dto/update-bookshelf.dto';
 
 interface SimilarBookResult {
@@ -21,10 +24,53 @@ export class BookshelfService {
     private readonly embeddingService: EmbeddingService,
   ) {}
 
+  private async checkLevelUp(userId: number) {
+    const totalDoneCount = await this.prisma.bookshelf.count({
+      where: { userId, status: 'DONE' },
+    });
+
+    const targetLevel =
+      totalDoneCount >= 100
+        ? 5
+        : totalDoneCount >= 50
+          ? 4
+          : totalDoneCount >= 30
+            ? 3
+            : totalDoneCount >= 10
+              ? 2
+              : 1;
+
+    if (targetLevel === 1) {
+      return {
+        isLevelUp: false,
+        currentCount: totalDoneCount,
+        newLevel: undefined,
+      };
+    }
+
+    //lt: < => 유저 테이블에서 id가 일치하고, 현재 level이 targetLevel보다 작은(level < targetLevel) 데이터만 고르기
+    const { count: promoted } = await this.prisma.user.updateMany({
+      where: {
+        id: userId,
+        level: { lt: targetLevel },
+      },
+      // 찾은 대상의 level 칸에 새 레벨을 적기
+      data: { level: targetLevel },
+    });
+
+    const isLevelUp = promoted > 0;
+
+    return {
+      isLevelUp,
+      currentCount: totalDoneCount,
+      newLevel: isLevelUp ? targetLevel : undefined,
+    };
+  }
+
   async addBook(
     userId: number,
     dto: AddBookDto,
-  ): Promise<BookshelfResponseDto> {
+  ): Promise<BookshelfWithLevelResponseDto> {
     // 1. 책 존재 여부 확인
     let book = await this.prisma.book.findUnique({
       where: { isbn: dto.isbn },
@@ -43,7 +89,7 @@ export class BookshelfService {
       });
     }
 
-    // [추가 포인트 1] 책은 이미 있어도 '임베딩'이 없는 경우가 많으므로 체크 로직 분리
+    // 책은 이미 있어도 '임베딩'이 없는 경우가 있으므로 체크 로직 분리
     const existingEmbedding = await this.prisma.$queryRaw`
       SELECT id FROM "BookEmbedding" WHERE "bookId" = ${book.id}
     `;
@@ -78,6 +124,14 @@ export class BookshelfService {
       include: { book: true },
     });
 
+    let levelUpInfo = {
+      isLevelUp: false,
+      currentCount: 0,
+    };
+    if (dto.status === 'DONE') {
+      levelUpInfo = await this.checkLevelUp(userId);
+    }
+
     return {
       id: bookshelf.id,
       status: bookshelf.status,
@@ -89,6 +143,7 @@ export class BookshelfService {
         imageUrl: bookshelf.book.imageUrl,
         description: bookshelf.book.description,
       },
+      ...levelUpInfo,
     };
   }
   async getMyBooks(userId: number): Promise<BookshelfResponseDto[]> {
@@ -173,7 +228,7 @@ export class BookshelfService {
       }
     }
 
-    return this.prisma.bookshelf.update({
+    const updated = await this.prisma.bookshelf.update({
       where: { id },
       data: {
         status: dto.status,
@@ -186,6 +241,19 @@ export class BookshelfService {
       },
       include: { book: true },
     });
+
+    let levelUpInfo = {
+      isLevelUp: false,
+      currentCount: 0,
+    };
+    if (dto.status === 'DONE' && item.status !== 'DONE') {
+      levelUpInfo = await this.checkLevelUp(userId);
+    }
+
+    return {
+      ...updated,
+      ...levelUpInfo,
+    };
   }
 
   async getSimilarBooks(

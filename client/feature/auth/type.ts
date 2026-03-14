@@ -12,6 +12,7 @@ export interface UserResponse {
   email: string;
   nickname: string;
   isMember: boolean;
+  level: number;
 }
 
 export interface LoginResponse {
