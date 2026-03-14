@@ -26,18 +26,9 @@ export class BookshelfService {
 
   private async checkLevelUp(userId: number) {
     const totalDoneCount = await this.prisma.bookshelf.count({
-      where: {
-        userId,
-        status: 'DONE',
-      },
+      where: { userId, status: 'DONE' },
     });
 
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { level: true },
-    });
-
-    const prevLevel = user?.level ?? 1;
     const targetLevel =
       totalDoneCount >= 100
         ? 5
@@ -49,14 +40,25 @@ export class BookshelfService {
               ? 2
               : 1;
 
-    const isLevelUp = targetLevel > prevLevel;
-
-    if (isLevelUp) {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: { level: targetLevel },
-      });
+    if (targetLevel === 1) {
+      return {
+        isLevelUp: false,
+        currentCount: totalDoneCount,
+        newLevel: undefined,
+      };
     }
+
+    //lt: < => 유저 테이블에서 id가 일치하고, 현재 level이 targetLevel보다 작은(level < targetLevel) 데이터만 고르기
+    const { count: promoted } = await this.prisma.user.updateMany({
+      where: {
+        id: userId,
+        level: { lt: targetLevel },
+      },
+      // 찾은 대상의 level 칸에 새 레벨을 적기
+      data: { level: targetLevel },
+    });
+
+    const isLevelUp = promoted > 0;
 
     return {
       isLevelUp,
