@@ -7,6 +7,7 @@ export interface UpdateBookshelfRequest {
   startDate?: string;
   endDate?: string;
   title?: string;
+  phrase?: string;
 }
 
 export interface BookItem {
@@ -23,6 +24,7 @@ export interface BookshelfItemResponse {
   status: BookStatus;
   createdAt: string;
   comment?: string | null;
+  phrase?: string | null;
   emotion?: string | null;
   startDate?: string | Date | null;
   endDate?: string | Date | null;
