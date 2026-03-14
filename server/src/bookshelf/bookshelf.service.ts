@@ -5,7 +5,10 @@ import { EmbeddingService } from 'src/embedding/embedding.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AITagResponseDto } from '../ai/ai-response.dto';
 import { AddBookDto } from './dto/add-book.dto';
-import { BookshelfResponseDto } from './dto/bookshelf-response.dto';
+import {
+  BookshelfResponseDto,
+  BookshelfWithLevelResponseDto,
+} from './dto/bookshelf-response.dto';
 import { UpdateBookshelfDto } from './dto/update-bookshelf.dto';
 
 interface SimilarBookResult {
@@ -28,48 +31,44 @@ export class BookshelfService {
         status: 'DONE',
       },
     });
-    let currentLevel = 1;
-    let isLevelUp = false;
 
-    switch (totalDoneCount) {
-      case 10:
-        currentLevel = 2;
-        isLevelUp = true;
-        break;
-      case 30:
-        currentLevel = 3;
-        isLevelUp = true;
-        break;
-      case 50:
-        currentLevel = 4;
-        isLevelUp = true;
-        break;
-      case 100:
-        currentLevel = 5;
-        isLevelUp = true;
-        break;
-      default:
-        isLevelUp = false;
-    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { level: true },
+    });
+
+    const prevLevel = user?.level ?? 1;
+    const targetLevel =
+      totalDoneCount >= 100
+        ? 5
+        : totalDoneCount >= 50
+          ? 4
+          : totalDoneCount >= 30
+            ? 3
+            : totalDoneCount >= 10
+              ? 2
+              : 1;
+
+    const isLevelUp = targetLevel > prevLevel;
 
     if (isLevelUp) {
       await this.prisma.user.update({
         where: { id: userId },
-        data: { level: currentLevel },
+        data: { level: targetLevel },
       });
     }
 
     return {
       isLevelUp,
       currentCount: totalDoneCount,
-      newLevel: isLevelUp ? currentLevel : undefined,
+      newLevel: isLevelUp ? targetLevel : undefined,
     };
   }
 
   async addBook(
     userId: number,
     dto: AddBookDto,
-  ): Promise<BookshelfResponseDto> {
+  ): Promise<BookshelfWithLevelResponseDto> {
     // 1. 책 존재 여부 확인
     let book = await this.prisma.book.findUnique({
       where: { isbn: dto.isbn },
@@ -123,7 +122,10 @@ export class BookshelfService {
       include: { book: true },
     });
 
-    let levelUpInfo = {};
+    let levelUpInfo = {
+      isLevelUp: false,
+      currentCount: 0,
+    };
     if (dto.status === 'DONE') {
       levelUpInfo = await this.checkLevelUp(userId);
     }
@@ -238,7 +240,10 @@ export class BookshelfService {
       include: { book: true },
     });
 
-    let levelUpInfo = {};
+    let levelUpInfo = {
+      isLevelUp: false,
+      currentCount: 0,
+    };
     if (dto.status === 'DONE' && item.status !== 'DONE') {
       levelUpInfo = await this.checkLevelUp(userId);
     }
