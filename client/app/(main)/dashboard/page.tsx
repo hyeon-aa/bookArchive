@@ -1,5 +1,7 @@
 "use client";
 
+import { useGetMe } from "@/feature/auth/queries";
+import { CharacterProfile } from "@/feature/dashboard/components/CharacterProfile";
 import { EmotionSummary } from "@/feature/dashboard/components/EmotionSummary";
 import { MonthlyChart } from "@/feature/dashboard/components/MonthlyChart";
 import { ReadingOverView } from "@/feature/dashboard/components/ReadingOverView";
@@ -8,6 +10,7 @@ import { MembershipBanner } from "@/feature/payment/components/MembershipBanner"
 
 export default function DashboardPage() {
   const { data, isLoading, error } = useDashboardStats();
+  const { data: userInfoData } = useGetMe();
 
   if (isLoading)
     return <div className="p-10 text-center">데이터를 불러오는 중...</div>;
@@ -19,6 +22,7 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+      {userInfoData && <CharacterProfile level={userInfoData.level || 1} />}
       <MembershipBanner />
       {data && (
         <>

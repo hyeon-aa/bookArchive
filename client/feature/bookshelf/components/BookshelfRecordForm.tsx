@@ -10,6 +10,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { LevelUpModal } from "@/shared/components/common/LevelUpModal";
+import { useModal } from "@/shared/hooks/useModal";
 import { FunnelFooter } from "./steps/FunnelFooter";
 import { Step1Status } from "./steps/Step1Status";
 import { Step2Review } from "./steps/Step2Review";
@@ -19,6 +21,7 @@ export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
   const { mutate: updateBook, isPending: isSaving } = useUpdateBook(item.id);
 
   const [step, setStep] = useState(1);
+  const { open } = useModal();
   const [aiMessage, setAIMessage] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<UpdateBookshelfRequest>({
@@ -51,10 +54,20 @@ export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
 
     updateBook(finalPayload, {
       onSuccess: (data) => {
-        if (data?.aiComment) {
-          setAIMessage(data.aiComment);
+        const handleNextStep = () => {
+          if (data?.aiComment) {
+            setAIMessage(data.aiComment);
+          } else {
+            router.push("/bookshelf");
+          }
+        };
+
+        if (data.isLevelUp) {
+          open(() => (
+            <LevelUpModal level={data.newLevel} onNext={handleNextStep} />
+          ));
         } else {
-          router.push("/bookshelf");
+          handleNextStep();
         }
       },
       onError: (error) => {
