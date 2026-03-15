@@ -1,8 +1,7 @@
 "use client";
 
 import { useAuthStore } from "@/shared/store/useAuthStore";
-import { useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, User } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode } from "react";
 import { BottomNav } from "../../shared/components/layout/BottomNav";
@@ -14,24 +13,21 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isLoggedIn, setLogout } = useAuthStore();
-  const queryClient = useQueryClient();
+  const { isLoggedIn } = useAuthStore();
 
   const needsBackButton =
     pathname.startsWith("/bookshelf/") && pathname !== "/bookshelf";
 
-  const handleClickLogin = () => {
+  const handleProfileClick = () => {
     if (isLoggedIn) {
-      setLogout();
-      queryClient.clear();
-      router.push("/");
+      router.push("/mypage");
     } else {
       router.push("/login");
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen max-w-md mx-auto bg-white">
+    <div className="flex flex-col min-h-screen max-w-md mx-auto bg-white shadow-sm">
       <header className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           {needsBackButton ? (
@@ -49,10 +45,18 @@ export default function MainLayout({ children }: MainLayoutProps) {
           )}
 
           <button
-            onClick={handleClickLogin}
-            className="text-sm font-medium text-[rgb(var(--primary-sage))] hover:text-[rgb(var(--secondary-sage-light))] active:opacity-80 transition-colors"
+            onClick={handleProfileClick}
+            className="flex items-center justify-center min-w-[44px] transition-all active:scale-95"
           >
-            {isLoggedIn ? "로그아웃" : "로그인"}
+            {isLoggedIn ? (
+              <div className="p-1.5 bg-gray-100 rounded-full hover:bg-gray-200">
+                <User size={22} className="text-gray-600" />
+              </div>
+            ) : (
+              <span className="text-sm font-medium text-[rgb(var(--primary-sage))] hover:text-[rgb(var(--secondary-sage-light))]">
+                로그인
+              </span>
+            )}
           </button>
         </div>
       </header>
