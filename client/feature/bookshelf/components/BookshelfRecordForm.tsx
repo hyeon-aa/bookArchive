@@ -12,7 +12,6 @@ import { useState } from "react";
 
 import { LevelUpModal } from "@/shared/components/common/LevelUpModal";
 import { useModal } from "@/shared/hooks/useModal";
-import { SharePreviewModal } from "./SharePreviewModal";
 import { FunnelFooter } from "./steps/FunnelFooter";
 import { Step1Status } from "./steps/Step1Status";
 import { Step2Review } from "./steps/Step2Review";
@@ -23,7 +22,7 @@ export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
   const { mutate: updateBook, isPending: isSaving } = useUpdateBook(item.id);
 
   const [step, setStep] = useState(1);
-  const { open, close } = useModal();
+  const { open } = useModal();
   const [aiMessage, setAIMessage] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<UpdateBookshelfRequest>({
@@ -45,16 +44,6 @@ export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
 
   const updateFields = (fields: Partial<UpdateBookshelfRequest>) => {
     setFormData((prev) => ({ ...prev, ...fields }));
-  };
-
-  const handleOpenShare = () => {
-    open(() => (
-      <SharePreviewModal
-        phrase={formData.phrase || ""}
-        title={item.book.title}
-        onClose={close}
-      />
-    ));
   };
 
   const handleSave = () => {
@@ -126,11 +115,7 @@ export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
         )}
 
         {step === 3 && (
-          <Step3Phrase
-            phrase={formData.phrase || ""}
-            onChange={updateFields}
-            onOpenShare={handleOpenShare}
-          />
+          <Step3Phrase phrase={formData.phrase || ""} onChange={updateFields} />
         )}
       </main>
 
