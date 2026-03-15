@@ -13,6 +13,7 @@ export class MypageController {
     return this.mypageService.getMyPhrase(userId);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('tags')
   async getMyTags(@CurrentUser('userId') userId: number) {
     return this.mypageService.getMyTags(userId);
