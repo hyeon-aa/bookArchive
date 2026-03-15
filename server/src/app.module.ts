@@ -9,6 +9,7 @@ import { BookshelfModule } from './bookshelf/bookshelf.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PaymentModule } from './payment/payment.module';
+import { MypageModule } from './mypage/mypage.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { PaymentModule } from './payment/payment.module';
     AirecommendModule,
     DashboardModule,
     PaymentModule,
+    MypageModule,
   ],
   controllers: [AppController],
   providers: [AppService],
