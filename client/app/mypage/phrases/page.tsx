@@ -7,7 +7,7 @@ import { useGetMyPhrases } from "@/feature/mypage/queries";
 
 import { SharePreviewModal } from "@/feature/bookshelf/components/SharePreviewModal";
 import { PhraseItem } from "@/feature/mypage/components/PhraseItem";
-import { MyPhrase } from "@/feature/mypage/type";
+import { MyPhraseResponse } from "@/feature/mypage/type";
 import { useModal } from "@/shared/hooks/useModal";
 
 export default function MyPhrasesPage() {
@@ -15,7 +15,7 @@ export default function MyPhrasesPage() {
   const { open, close } = useModal();
   const { data: phrases, isLoading } = useGetMyPhrases();
 
-  const handleOpenShare = (item: MyPhrase) => {
+  const handleOpenShare = (item: MyPhraseResponse) => {
     open(() => (
       <SharePreviewModal
         phrase={item.phrase}
