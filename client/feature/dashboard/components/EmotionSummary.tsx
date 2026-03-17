@@ -1,5 +1,7 @@
 "use client";
 
+import { EMOTIONS } from "@/shared/constants/emotion";
+
 type EmotionStat = {
   emotion: string;
   count: number;
@@ -21,53 +23,44 @@ export function EmotionSummary({ emotionStats }: EmotionSummaryProps) {
   const total = emotionStats.reduce((sum, e) => sum + e.count, 0);
   const topEmotion = emotionStats[0];
 
+  const topemotionType = EMOTIONS.find(
+    (emotion) => emotion.label === topEmotion.emotion
+  );
+  const emotionEmoji = topemotionType?.emoji;
+
   return (
     <div className="space-y-6">
-      <div className="bg-[#F8FAF9] rounded-2xl p-4 flex items-center justify-between">
-        <div>
-          <p className="text-[11px] font-bold text-[#7C9885] uppercase tracking-wider mb-1">
-            가장 많이 느낀 감정
-          </p>
-          <h4 className="text-lg font-bold text-gray-800">
-            {topEmotion.emotion} <span className="text-[#7C9885]"></span>
-          </h4>
+      <div className="flex items-center gap-4 py-2">
+        <div className="flex-shrink-0 w-16 h-16 rounded-full bg-[#7C9885]/10 flex items-center justify-center text-3xl">
+          {emotionEmoji}
         </div>
-        <div className="text-right">
-          <span className="text-2xl font-black text-[#7C9885]/20">
-            {Math.round((topEmotion.count / total) * 100)}%
-          </span>
+        <div>
+          <h4 className="text-sm font-semibold text-gray-400">
+            가장 많이 느낀 감정
+          </h4>
+          <p className="text-xl font-bold text-gray-900">
+            {topEmotion.emotion}
+          </p>
         </div>
       </div>
 
-      <div className="px-1 space-y-4">
-        {emotionStats.map((stat, index) => {
+      <div className="space-y-5">
+        {emotionStats.slice(0, 3).map((stat, index) => {
           const percent = Math.round((stat.count / total) * 100);
-          const barColor = index === 0 ? "bg-[#7C9885]" : "bg-[#7C9885]/30";
-          const textColor =
-            index === 0 ? "font-bold text-gray-800" : "text-gray-500";
-
           return (
-            <div key={stat.emotion} className="group">
-              <div className="flex justify-between items-end mb-1.5">
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs ${textColor}`}>{stat.emotion}</span>
-                  <span className="text-[10px] text-gray-300">
-                    {stat.count}회
-                  </span>
-                </div>
-                <span
-                  className={`text-[11px] font-medium ${
-                    index === 0 ? "text-[#7C9885]" : "text-gray-400"
-                  }`}
-                >
+            <div key={stat.emotion} className="relative">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  {stat.emotion}
+                </span>
+                <span className="text-xs font-bold text-[#7C9885]">
                   {percent}%
                 </span>
               </div>
-
-              <div className="h-2 bg-gray-50 rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                 <div
-                  className={`h-full ${barColor} rounded-full transition-all duration-1000 ease-out`}
-                  style={{ width: `${percent}%` }}
+                  className="h-full bg-[#7C9885] rounded-full"
+                  style={{ width: `${percent}%`, opacity: 1 - index * 0.3 }}
                 />
               </div>
             </div>
