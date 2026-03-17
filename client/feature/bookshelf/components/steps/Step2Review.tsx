@@ -1,6 +1,7 @@
 import { UpdateBookshelfRequest } from "@/feature/bookshelf/type";
 import { EMOTIONS } from "@/shared/constants/emotion";
 import { Check, MessageSquare } from "lucide-react";
+import { motion } from "motion/react";
 import { FunnelStepLayout } from "./FunnelStepLayout";
 
 interface Step2Props {
@@ -17,11 +18,14 @@ export function Step2Review({ emotion, comment, onChange }: Step2Props) {
     >
       <div className="grid grid-cols-3 gap-2">
         {EMOTIONS.map((emo) => (
-          <button
+          <motion.button
+            layout
+            //평상시 → scale 1 ,누름 → scale 0.92, 손 떼면 → 다시 1
+            whileTap={{ scale: 0.92 }}
             key={emo.label}
             type="button"
             onClick={() => onChange({ emotion: emo.label })}
-            className={`relative py-3.5 rounded-xl border-2 flex flex-col items-center justify-center gap-1 transition-all ${
+            className={`relative py-3.5 rounded-xl border-2 flex flex-col items-center justify-center gap-1 ${
               emotion === emo.label
                 ? `${emo.color} border-transparent`
                 : "border-[#F3F4F6] text-[#A0A0A0] bg-white"
@@ -34,7 +38,7 @@ export function Step2Review({ emotion, comment, onChange }: Step2Props) {
                 <Check size={10} className="text-white" />
               </div>
             )}
-          </button>
+          </motion.button>
         ))}
       </div>
 
