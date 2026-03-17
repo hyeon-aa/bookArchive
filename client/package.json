@@ -16,6 +16,7 @@
     "cookies-next": "^6.1.1",
     "html-to-image": "^1.11.13",
     "lucide-react": "^0.562.0",
+    "motion": "^12.38.0",
     "next": "16.1.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
