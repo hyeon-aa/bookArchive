@@ -8,6 +8,7 @@ import { useAuthStore } from "@/shared/store/useAuthStore";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   BookMarked,
+  Clock,
   CreditCard,
   LogOut,
   MessageSquareQuote,
@@ -59,6 +60,11 @@ export default function MyPage() {
           icon={<MessageSquareQuote size={20} />}
           label="기록한 문장들"
           onClick={() => router.push("/mypage/phrases")}
+        />
+        <MyPageMenuItem
+          icon={<Clock size={20} />}
+          label="독서 타임라인"
+          onClick={() => router.push("/mypage/timeline")}
         />
         <MyPageMenuItem
           icon={<BookMarked size={20} />}

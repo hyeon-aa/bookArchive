@@ -5,7 +5,7 @@ export interface BookInfo {
   author: string;
 }
 
-export interface MyPhrase {
+export interface MyPhraseResponse {
   id: number;
   phrase: string;
   comment: string | null;
@@ -19,6 +19,11 @@ export interface TagStat {
   count: number;
 }
 
-export interface MyTags {
+export interface MyTagsResponse {
   tags: TagStat[];
+}
+
+export interface BookTimelineResponse {
+  month: string;
+  books: string[];
 }

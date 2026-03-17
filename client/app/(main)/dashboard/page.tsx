@@ -1,6 +1,5 @@
 "use client";
 
-import { DashboardSection } from "@/feature/dashboard/components/DashboardSection";
 import { EmotionSummary } from "@/feature/dashboard/components/EmotionSummary";
 import { MonthlyChart } from "@/feature/dashboard/components/MonthlyChart";
 import { ReadingOverView } from "@/feature/dashboard/components/ReadingOverView";
@@ -13,31 +12,48 @@ export default function DashboardPage() {
     return (
       <div className="p-10 text-center text-red-500">데이터 로드 실패</div>
     );
-
-  if (isLoading) {
-    return <div className="p-10 text-center text-gray-400">불러오는 중...</div>;
-  }
+  if (isLoading)
+    return (
+      <div className="p-10 text-center text-gray-400 font-medium">
+        데이터를 분석 중입니다...
+      </div>
+    );
 
   return (
-    <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-md mx-auto px-5 py-10 space-y-10 bg-[#FBFBFB] min-h-screen pb-20">
       {data && (
         <>
-          <DashboardSection title="나의 독서 여정" emoji="📚">
-            <ReadingOverView
-              totalCount={data.totalCount}
-              doneCount={data.doneCount}
-              readingCount={data.readingCount}
-              completionRate={data.completionRate}
-            />
-          </DashboardSection>
+          <header className="space-y-1">
+            <h1 className="text-2xl font-black text-gray-900 tracking-tight">
+              독서 인사이트
+            </h1>
+            <p className="text-sm font-medium text-gray-400">
+              한눈에 확인하는 나의 독서 리포트
+            </p>
+          </header>
 
-          <DashboardSection title="월별 독서 통계" emoji="📊">
+          <ReadingOverView
+            totalCount={data.totalCount}
+            doneCount={data.doneCount}
+            readingCount={data.readingCount}
+            completionRate={data.completionRate}
+          />
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <span className="text-lg">📊</span>
+              <h3 className="font-bold text-gray-800">월별 독서 흐름</h3>
+            </div>
             <MonthlyChart data={data.monthlyStats} />
-          </DashboardSection>
+          </div>
 
-          <DashboardSection title="감정 분포" emoji="💬">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <span className="text-lg">🎨</span>
+              <h3 className="font-bold text-gray-800">마음의 색깔</h3>
+            </div>
             <EmotionSummary emotionStats={data.emotionStats} />
-          </DashboardSection>
+          </div>
         </>
       )}
     </div>

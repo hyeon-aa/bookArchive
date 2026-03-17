@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { BookTimeLineResponseDto } from './dto/booktimeline-response.dto';
 import { MyPhraseResponseDto } from './dto/myphrase-reponse.dto';
 import { MyTagsResponseDto } from './dto/mytags-response.dto';
 
@@ -76,5 +77,47 @@ export class MypageService {
     }));
 
     return { tags };
+  }
+
+  async getBookTimeLine(userId: number): Promise<BookTimeLineResponseDto[]> {
+    const records = await this.prisma.bookshelf.findMany({
+      where: {
+        userId,
+        status: 'DONE',
+        endDate: {
+          not: null,
+        },
+      },
+      select: {
+        endDate: true,
+        book: {
+          select: {
+            title: true,
+          },
+        },
+      },
+      orderBy: { endDate: 'desc' },
+    });
+
+    const groups: Record<string, string[]> = {};
+    records.forEach((record) => {
+      const monthKey = record.endDate!.toISOString().slice(0, 7);
+
+      if (!groups[monthKey]) {
+        groups[monthKey] = [];
+      }
+
+      groups[monthKey].push(record.book.title);
+    });
+
+    const bookTimeLine: BookTimeLineResponseDto[] = Object.entries(groups).map(
+      ([month, books]) => ({
+        month,
+        books,
+      }),
+    );
+
+    //{bookTimeLine} 이렇게 하면 응답이 bookTimeLine:{원하는 데이터} 이렇게 오게됨.
+    return bookTimeLine;
   }
 }

@@ -18,4 +18,10 @@ export class MypageController {
   async getMyTags(@CurrentUser('userId') userId: number) {
     return this.mypageService.getMyTags(userId);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('timeline')
+  async getBookTimeLine(@CurrentUser('userId') userId: number) {
+    return this.mypageService.getBookTimeLine(userId);
+  }
 }

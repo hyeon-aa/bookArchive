@@ -2,6 +2,7 @@
 
 import { EMOTION_EMOJIS } from "@/shared/constants/emotion";
 import { Check } from "lucide-react";
+import { motion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { BookshelfItemResponse } from "../../type";
@@ -26,17 +27,29 @@ export const BooksGridView = ({
       {books.map((item) => {
         const isSelected = selectedIds.includes(item.id);
         return (
-          <div
+          <motion.div
             key={item.id}
+            layout
+            animate={{
+              scale: isSelected ? 0.9 : 1,
+            }}
+            whileHover={{
+              y: -6,
+              scale: isSelected ? 0.94 : 1.04,
+            }}
+            whileTap={{ scale: 0.92 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 20,
+            }}
             onClick={() =>
               isEditMode
                 ? onSelect(item.id)
                 : router.push(`/bookshelf/${item.id}`)
             }
-            className={`aspect-[2/3] relative rounded-xl overflow-hidden shadow-sm border transition-all active:scale-[0.95] group cursor-pointer ${
-              isSelected
-                ? "ring-4 ring-[#FF5F5F] ring-offset-2 scale-[0.9]"
-                : "border-[#F5F0E6]"
+            className={`aspect-[2/3] relative rounded-xl overflow-hidden shadow-sm border cursor-pointer ${
+              isSelected ? "ring-4 ring-[#FF5F5F]" : "border-[#F5F0E6]"
             }`}
           >
             <Image
@@ -63,7 +76,7 @@ export const BooksGridView = ({
                 </div>
               )
             )}
-          </div>
+          </motion.div>
         );
       })}
     </div>
