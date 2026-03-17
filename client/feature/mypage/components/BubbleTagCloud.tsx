@@ -11,18 +11,7 @@ export function BubbleTagCloud({ tags }: BubbleTagCloudProps) {
   const maxCount = Math.max(...tags.map((t) => t.count), 1);
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={{
-        visible: {
-          transition: {
-            staggerChildren: 0.1,
-          },
-        },
-      }}
-      className="flex flex-wrap justify-center items-center gap-4 py-4 px-4"
-    >
+    <motion.div className="flex flex-wrap justify-center items-center gap-4 py-4 px-4">
       {tags.map((tag, index) => {
         const scale = 0.9 + (tag.count / maxCount) * 0.4;
         const isTop = tag.count === maxCount && tag.count > 1;
