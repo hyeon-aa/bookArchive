@@ -101,8 +101,7 @@ export class MypageService {
 
     const groups: Record<string, string[]> = {};
     records.forEach((record) => {
-      const date = new Date(record.endDate!);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthKey = record.endDate!.toISOString().slice(0, 7);
 
       if (!groups[monthKey]) {
         groups[monthKey] = [];
