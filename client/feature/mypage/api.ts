@@ -11,7 +11,7 @@ export const getMyTags = async (): Promise<MyTagsResponse> => {
   return data;
 };
 
-export const getBookTimeLine = async (): Promise<BookTimelineResponse> => {
-  const data = await api.get<BookTimelineResponse>("/mypage/timeline");
+export const getBookTimeLine = async (): Promise<BookTimelineResponse[]> => {
+  const data = await api.get<BookTimelineResponse[]>("/mypage/timeline");
   return data;
 };
