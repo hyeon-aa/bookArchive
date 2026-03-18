@@ -93,8 +93,27 @@ export class PaymentService {
   }
 
   /*토스 페이먼츠 결제 취소*/
-  async cancel(dto: CancelPaymentDto): Promise<Record<string, unknown>> {
+  async cancel(
+    userId: number,
+    dto: CancelPaymentDto,
+  ): Promise<Record<string, unknown>> {
     const { paymentKey, cancelReason } = dto;
+
+    const payment = await this.prisma.payment.findFirst({
+      where: {
+        paymentKey,
+        userId,
+        status: 'DONE',
+      },
+      select: { userId: true },
+    });
+
+    if (!payment) {
+      throw new BadRequestException(
+        '취소 가능한 결제 내역을 찾을 수 없습니다.',
+      );
+    }
+
     const secretKey = process.env.TOSS_SECRET_KEY ?? '';
     const encodedKey = Buffer.from(`${secretKey}:`).toString('base64');
 
