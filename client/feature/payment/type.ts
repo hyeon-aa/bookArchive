@@ -23,3 +23,28 @@ export interface TossConfirmResponse extends PaymentResponse {
     url: string;
   };
 }
+
+export interface CancelPaymentRequest {
+  paymentKey: string;
+  cancelReason: string;
+}
+
+export interface TossCancelResponse {
+  status: "CANCELED" | "DONE";
+  paymentKey: string;
+  orderId: string;
+  cancels: Array<{
+    cancelAmount: number;
+    cancelReason: string;
+    canceledAt: string;
+  }>;
+}
+
+export interface myPaymentsResponse {
+  paymentKey: string | null;
+  orderId: string;
+  createdAt: string;
+  status: string;
+  orderName: string;
+  amount: number;
+}

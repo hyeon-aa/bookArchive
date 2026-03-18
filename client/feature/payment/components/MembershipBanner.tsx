@@ -1,19 +1,15 @@
 "use client";
 
-import { usePaymentMutation } from "@/feature/payment/queries";
+import { useModal } from "@/shared/hooks/useModal";
 import { useAuthStore } from "@/shared/store/useAuthStore";
+import { PaymentModal } from "./PaymentModal";
 
 export function MembershipBanner() {
   const { user, isLoggedIn } = useAuthStore();
-  const { mutateAsync: requestPayment, isPending: isPaying } =
-    usePaymentMutation();
+  const { open } = useModal();
 
-  const handleMembershipSignup = async () => {
-    try {
-      await requestPayment();
-    } catch (err) {
-      console.error("결제 준비 중 오류:", err);
-    }
+  const handleMembershipSignup = () => {
+    open(() => <PaymentModal />);
   };
 
   if (isLoggedIn && user?.isMember) {
@@ -31,10 +27,9 @@ export function MembershipBanner() {
       </div>
       <button
         onClick={handleMembershipSignup}
-        disabled={isPaying}
-        className="w-full bg-[#7C9885] hover:bg-[#6E8776] text-white py-3 rounded-xl font-semibold transition disabled:opacity-50"
+        className="w-full bg-[#7C9885] hover:bg-[#6E8776] text-white py-3 rounded-xl font-semibold transition"
       >
-        {isPaying ? "결제창 여는 중..." : "멤버십 시작하기"}
+        멤버십 시작하기
       </button>
     </section>
   );

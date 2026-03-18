@@ -1,30 +1,30 @@
-import { useMutation } from "@tanstack/react-query";
-import { loadTossPayments } from "@tosspayments/payment-sdk";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { authKeys } from "../auth/keys";
 import { paymentApi } from "./api";
-import { ConfirmPaymentRequest } from "./type";
+import { paymentKeys } from "./keys";
+import { CancelPaymentRequest, ConfirmPaymentRequest } from "./type";
 
-export const usePaymentMutation = () => {
+export const useConfirmPayment = () => {
   return useMutation({
-    mutationFn: async () => {
-      const readyData = await paymentApi.ready();
+    mutationFn: (dto: ConfirmPaymentRequest) => paymentApi.confirm(dto),
+  });
+};
 
-      const tossPayments = await loadTossPayments(
-        process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!
-      );
-
-      return tossPayments.requestPayment("카드", {
-        amount: readyData.amount,
-        orderId: readyData.orderId,
-        orderName: readyData.orderName,
-        successUrl: `${window.location.origin}/payment/success`,
-        failUrl: `${window.location.origin}/payment/fail`,
+export const useCancelPayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (dto: CancelPaymentRequest) => paymentApi.cancel(dto),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: authKeys.user(),
       });
     },
   });
 };
 
-export const useConfirmPayment = () => {
-  return useMutation({
-    mutationFn: (dto: ConfirmPaymentRequest) => paymentApi.confirm(dto),
+export const useGetMyPayments = () => {
+  return useQuery({
+    queryKey: paymentKeys.lists(),
+    queryFn: paymentApi.getMyPayments,
   });
 };

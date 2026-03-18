@@ -84,6 +84,7 @@ export default function MyPage() {
         <MyPageMenuItem
           icon={<CreditCard size={20} />}
           label="결제 내역 관리"
+          onClick={() => router.push("/mypage/payments")}
         />
 
         <div className="pt-4">

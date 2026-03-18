@@ -11,7 +11,7 @@
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-query-devtools": "^5.91.3",
-    "@tosspayments/payment-sdk": "^1.9.2",
+    "@tosspayments/tosspayments-sdk": "^2.6.0",
     "axios": "^1.13.6",
     "cookies-next": "^6.1.1",
     "html-to-image": "^1.11.13",

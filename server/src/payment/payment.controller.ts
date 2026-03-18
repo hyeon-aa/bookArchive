@@ -1,7 +1,7 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt-auth-guard';
 import { CurrentUser } from 'src/common/decorators/user.decorator';
-import { ConfirmPaymentDto } from './dto/payment.dto';
+import { CancelPaymentDto, ConfirmPaymentDto } from './dto/payment.dto';
 import { PaymentService } from './payment.service';
 
 @Controller('payments')
@@ -26,5 +26,20 @@ export class PaymentController {
     @Body() dto: ConfirmPaymentDto,
   ): Promise<Record<string, unknown>> {
     return await this.paymentService.confirm(dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('cancel')
+  async cancel(
+    @CurrentUser('userId') userId: number,
+    @Body() dto: CancelPaymentDto,
+  ): Promise<Record<string, unknown>> {
+    return await this.paymentService.cancel(userId, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getMyPayments(@CurrentUser('userId') userId: number) {
+    return await this.paymentService.getMyPayments(userId);
   }
 }
