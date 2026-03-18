@@ -43,7 +43,7 @@ export interface TossCancelResponse {
 export interface myPaymentsResponse {
   paymentKey: string | null;
   orderId: string;
-  createdAt: Date;
+  createdAt: string;
   status: string;
   orderName: string;
   amount: number;
