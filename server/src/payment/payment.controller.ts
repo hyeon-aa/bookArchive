@@ -31,11 +31,13 @@ export class PaymentController {
   @UseGuards(JwtAuthGuard)
   @Post('cancel')
   async cancel(
+    @CurrentUser('userId') userId: number,
     @Body() dto: CancelPaymentDto,
   ): Promise<Record<string, unknown>> {
-    return await this.paymentService.cancel(dto);
+    return await this.paymentService.cancel(userId, dto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMyPayments(@CurrentUser('userId') userId: number) {
     return await this.paymentService.getMyPayments(userId);
