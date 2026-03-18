@@ -11,7 +11,7 @@ export const PAYMENT_STATUS_CONFIG = {
     label: "결제대기",
     className: "bg-amber-50 text-amber-600",
   },
-  FAILED: {
+  FAIL: {
     label: "결제실패",
     className: "bg-gray-100 text-gray-500",
   },

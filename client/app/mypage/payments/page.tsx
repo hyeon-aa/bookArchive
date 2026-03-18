@@ -74,7 +74,7 @@ export default function PaymentHistoryPage() {
             {payments?.map((item: myPaymentsResponse) => {
               const statusMeta =
                 PAYMENT_STATUS_CONFIG[item.status as PaymentStatus] ||
-                PAYMENT_STATUS_CONFIG.FAILED;
+                PAYMENT_STATUS_CONFIG.FAIL;
 
               return (
                 <div
