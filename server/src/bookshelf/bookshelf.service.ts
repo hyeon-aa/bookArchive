@@ -8,13 +8,9 @@ import { AddBookDto } from './dto/add-book.dto';
 import {
   BookshelfResponseDto,
   BookshelfWithLevelResponseDto,
+  SimilarBookResult,
 } from './dto/bookshelf-response.dto';
 import { UpdateBookshelfDto } from './dto/update-bookshelf.dto';
-
-interface SimilarBookResult {
-  title: string;
-  author: string;
-}
 
 @Injectable()
 export class BookshelfService {
