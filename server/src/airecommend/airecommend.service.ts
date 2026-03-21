@@ -199,7 +199,7 @@ export class AirecommendService {
     try {
       return await this.aiService.generateAIBookReport({ books: myBooks });
     } catch (error) {
-      console.error('[Daily Quote Service Error]', error);
+      console.error('[AI Report Service Error]', error);
       throw error;
     }
   }
