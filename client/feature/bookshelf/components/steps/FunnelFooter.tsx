@@ -7,7 +7,6 @@ interface FunnelFooterProps {
   isValid: boolean;
   onPrev: () => void;
   onNext: () => void;
-  onSave: () => void;
 }
 
 export function FunnelFooter({
@@ -17,7 +16,6 @@ export function FunnelFooter({
   isValid,
   onPrev,
   onNext,
-  onSave,
 }: FunnelFooterProps) {
   return (
     <footer className="fixed bottom-0 left-0 right-0 mx-auto max-w-md w-full p-5 bg-white/90 backdrop-blur-md border-t border-gray-100 flex gap-3 pb-10 z-20">
@@ -33,6 +31,7 @@ export function FunnelFooter({
 
       {step < totalSteps ? (
         <button
+          key="next-btn"
           type="button"
           onClick={onNext}
           disabled={!isValid}
@@ -42,8 +41,8 @@ export function FunnelFooter({
         </button>
       ) : (
         <button
-          type="button"
-          onClick={onSave}
+          key="submit-btn"
+          type="submit"
           disabled={isSaving || !isValid}
           className="flex-1 h-14 bg-[#7C9885] text-white rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-all shadow-lg shadow-[#7C9885]/20"
         >
