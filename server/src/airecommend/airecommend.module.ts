@@ -1,24 +1,23 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { BooksService } from 'src/books/books.service';
+import { AiModule } from 'src/ai/ai.module';
 import { BookshelfModule } from 'src/bookshelf/bookshelf.module';
-import { BookshelfService } from 'src/bookshelf/bookshelf.service';
-import { EmbeddingService } from 'src/embedding/embedding.service';
+import { EmbeddingModule } from 'src/embedding/embedding.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
-import { aiService } from '../ai/ai.service';
 import { BooksModule } from '../books/books.module';
 import { AirecommendController } from './airecommend.controller';
 import { AirecommendService } from './airecommend.service';
 
 @Module({
-  imports: [HttpModule, BooksModule, BookshelfModule, PrismaModule],
-  controllers: [AirecommendController],
-  providers: [
-    AirecommendService,
-    aiService,
-    BookshelfService,
-    BooksService,
-    EmbeddingService,
+  imports: [
+    HttpModule,
+    BooksModule,
+    BookshelfModule,
+    PrismaModule,
+    EmbeddingModule,
+    AiModule,
   ],
+  controllers: [AirecommendController],
+  providers: [AirecommendService],
 })
 export class AirecommendModule {}

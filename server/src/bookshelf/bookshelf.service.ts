@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { aiService } from 'src/ai/ai.service';
 import { EmbeddingService } from 'src/embedding/embedding.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AITagResponseDto } from '../ai/ai-response.dto';
+import { AITagResponseDto } from '../ai/dto/ai-response.dto';
 import { AddBookDto } from './dto/add-book.dto';
 import {
   BookshelfResponseDto,
