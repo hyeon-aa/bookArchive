@@ -1,6 +1,7 @@
 import { api } from "@/lib/api";
 import {
   AIRecommendResponse,
+  AiReportResponse,
   DailyQuoteResponse,
   TasteRecommendResponse,
 } from "./type";
@@ -20,5 +21,9 @@ export const exploreApi = {
 
   getTasteRecommendations: async () => {
     return await api.get<TasteRecommendResponse>("/ai-recommend/taste");
+  },
+
+  getReport: async () => {
+    return await api.get<AiReportResponse>("/ai-recommend/ai-report");
   },
 };

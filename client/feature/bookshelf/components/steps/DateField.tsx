@@ -7,7 +7,7 @@ export function DateField({
   isAnimated,
 }: {
   label: string;
-  value: string;
+  value?: string | null;
   onChange: (v: string) => void;
   isAnimated?: boolean;
 }) {
@@ -22,7 +22,7 @@ export function DateField({
       </label>
       <input
         type="date"
-        value={value}
+        value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         className="w-full h-12 bg-[#F9FAFB] rounded-xl px-4 text-sm outline-none focus:ring-2 ring-[#7C9885]/20 appearance-none border-none"
       />

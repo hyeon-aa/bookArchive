@@ -189,6 +189,8 @@ export class BookshelfService {
       endDate: item.endDate,
       createdAt: item.createdAt,
       aiComment: item.aiComment,
+      intent: item.intent,
+      sub: item.sub,
       book: {
         isbn: item.book.isbn,
         title: item.book.title,
@@ -238,6 +240,8 @@ export class BookshelfService {
         startDate: dto.startDate ? new Date(dto.startDate) : undefined,
         endDate: dto.endDate ? new Date(dto.endDate) : undefined,
         phrase: dto.phrase,
+        intent: dto.intent,
+        sub: dto.sub,
         aiComment,
         aiTags,
       },

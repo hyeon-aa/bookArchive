@@ -61,7 +61,6 @@ export const EMOTIONS = [
   },
 ] as const;
 
-export const EMOTION_EMOJIS: Record<string, string> = EMOTIONS.reduce(
-  (acc, cur) => ({ ...acc, [cur.label]: cur.emoji }),
-  {}
+export const EMOTION_EMOJIS: Record<string, string> = Object.fromEntries(
+  EMOTIONS.map((cur) => [cur.label, cur.emoji])
 );

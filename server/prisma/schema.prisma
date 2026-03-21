@@ -54,6 +54,8 @@ model Bookshelf {
   emotion   String?    // 감정
   startDate DateTime?  // 시작 날짜
   endDate   DateTime?  // 완료 날짜
+  intent    String?
+  sub    String?
 
   aiComment String?
   aiTags    String[]

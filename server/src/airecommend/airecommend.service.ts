@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { aiService } from '../ai/ai.service';
 import { BooksService } from '../books/books.service';
 import { BookshelfService } from '../bookshelf/bookshelf.service';
 import {
   AiRecommendRequestDto,
+  AiReportResponseDto,
   AITasteRecommendResponseDto,
   DailyQuoteResponseDto,
 } from './dto/ai-recommend.dto';
@@ -32,6 +34,7 @@ export class AirecommendService {
     private readonly aiService: aiService,
     private readonly booksService: BooksService,
     private readonly BookShelfService: BookshelfService,
+    private readonly prisma: PrismaService,
   ) {}
   async recommend(
     dto: AiRecommendRequestDto,
@@ -161,6 +164,43 @@ export class AirecommendService {
         familiarBooks: [],
         challengeBooks: [],
       };
+    }
+  }
+
+  async getAIReport(userId: number): Promise<AiReportResponseDto> {
+    const result = await this.prisma.bookshelf.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        phrase: true,
+        emotion: true,
+        intent: true,
+        sub: true,
+        book: {
+          select: {
+            title: true,
+            description: true,
+            author: true,
+          },
+        },
+      },
+    });
+
+    const myBooks = result.map((item) => ({
+      title: item.book.title,
+      description: item.book.description,
+      author: item.book.author,
+      phrase: item.phrase,
+      emotion: item.emotion,
+      intent: item.intent,
+      sub: item.sub,
+    }));
+
+    try {
+      return await this.aiService.generateAIBookReport({ books: myBooks });
+    } catch (error) {
+      console.error('[AI Report Service Error]', error);
+      throw error;
     }
   }
 }

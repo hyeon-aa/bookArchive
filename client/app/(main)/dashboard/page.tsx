@@ -1,12 +1,15 @@
 "use client";
 
+import { AiReportCard } from "@/feature/dashboard/components/AIReportCard";
 import { EmotionSummary } from "@/feature/dashboard/components/EmotionSummary";
 import { MonthlyChart } from "@/feature/dashboard/components/MonthlyChart";
 import { ReadingOverView } from "@/feature/dashboard/components/ReadingOverView";
 import { useDashboardStats } from "@/feature/dashboard/queries";
+import { useAIReport } from "@/feature/explore/queries";
 
 export default function DashboardPage() {
   const { data, isLoading, error } = useDashboardStats();
+  const { data: aiReport, isLoading: isAiLoading } = useAIReport();
 
   if (error)
     return (
@@ -31,6 +34,12 @@ export default function DashboardPage() {
               한눈에 확인하는 나의 독서 리포트
             </p>
           </header>
+
+          {isAiLoading ? (
+            <div className="h-64 bg-gray-100 animate-pulse rounded-2xl" />
+          ) : (
+            aiReport && <AiReportCard data={aiReport} />
+          )}
 
           <ReadingOverView
             totalCount={data.totalCount}
