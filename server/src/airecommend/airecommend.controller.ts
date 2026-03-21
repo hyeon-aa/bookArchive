@@ -4,6 +4,7 @@ import { CurrentUser } from 'src/common/decorators/user.decorator';
 import { AirecommendService } from './airecommend.service';
 import {
   AiRecommendRequestDto,
+  AiReportResponseDto,
   AITasteRecommendResponseDto,
 } from './dto/ai-recommend.dto';
 
@@ -27,5 +28,13 @@ export class AirecommendController {
     @CurrentUser('userId') userId: number,
   ): Promise<AITasteRecommendResponseDto> {
     return this.service.getTasteRecommendations(userId);
+  }
+
+  @Get('ai-report')
+  @UseGuards(JwtAuthGuard)
+  async getAiReport(
+    @CurrentUser('userId') userId: number,
+  ): Promise<AiReportResponseDto> {
+    return this.service.getAIReport(userId);
   }
 }

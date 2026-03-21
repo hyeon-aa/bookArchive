@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import Groq from 'groq-sdk'; // npm install groq-sdk
-import { DailyQuoteResponseDto } from 'src/airecommend/dto/ai-recommend.dto';
+import {
+  AiReportRequestDto,
+  DailyQuoteResponseDto,
+} from 'src/airecommend/dto/ai-recommend.dto';
 import { AIRecommendDraft } from 'src/airecommend/types/ai-recommend.type';
 import { AITagRequestDto } from './ai-request.dto';
 import {
+  AIBookReportDto,
   AITagResponseDto,
   AITasteRecommendResponseDto,
 } from './ai-response.dto';
@@ -286,6 +290,143 @@ export class aiService {
         tasteSummary: '당신의 독서 취향을 분석하는 중이에요.',
         familiarBooks: [],
         challengeBooks: [],
+      };
+    }
+  }
+
+  async generateAIBookReport(
+    myBooks: AiReportRequestDto,
+  ): Promise<AIBookReportDto> {
+    try {
+      const completion = await this.groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content: `
+            당신은 사용자의 한 달 독서 데이터를 분석해 '음식 캐릭터'를 부여하고 리포트를 작성하는 '심리분석 북 큐레이터'입니다.
+            반드시 아래의 JSON 구조와 지침을 엄격히 따라 응답하세요.
+
+            [분석 지침]
+            1. reportTitle: 이달의 독서 흐름을 관통하는 감성적인 제목 (예: "지친 마음을 보듬어준 문장들의 온기")
+            2. topIntent: 사용자가 선택한 '독서 의도' 중 가장 비중이 높은 것을 선정하고, 왜 이 의도가 나타났는지 심리적 통찰(insight)을 제공하세요.
+            3. intentVsEmotionAnalysis: 
+              - summary: 의도와 결과(감정) 사이의 연관성을 한 문장으로 요약.
+              - details: 구체적인 분석 내용 3가지를 배열로 제공. (예: "읽기 전엔 '성장'을 원했지만 끝난 후엔 '평온'을 얻음")
+            4. character: 
+              - name: 음식 이름 (예: "달콤쌉싸름한 다크 초콜릿", "몽글몽글 순두부")
+              - traits: 캐릭터의 특징 키워드 3개.
+              - description: 캐릭터에 대한 짧은 묘사.
+              - reason: 이 캐릭터로 선정된 심리적 근거 (사용자의 데이터 기반).
+            5. statistics:
+              - totalBooks: 입력받은 책의 총 개수.
+              - mostFrequentEmotion: 가장 많이 선택된 감정.
+              - changeSummary: 지난달 대비 혹은 이달 내에서의 심리 변화 요약.
+            6. coachMessage: 다음 달의 독서를 응원하는 다정하고 따뜻한 격려 한마디.
+            
+            {
+              "reportTitle": string,
+              "topIntent": {
+                "label": string,
+                "count": number,
+                "insight": string
+              },
+              "intentVsEmotionAnalysis": {
+                "summary": string,
+                "details": string[]
+              },
+              "character": {
+                "name": string,
+                "traits": string[],
+                "description": string,
+                "reason": string
+              },
+              "statistics": {
+                "totalBooks": number,
+                "mostFrequentEmotion": string,
+                "changeSummary": string
+              },
+              "coachMessage": string
+            }
+            
+            [작성 규칙]
+            - 모든 문장은 자연스럽고 따뜻한 한국어로 작성하세요.
+            - 과장하지 말고, 실제 데이터를 기반으로 해석하세요.
+            - "details"는 2~3개의 문장 배열로 작성하세요.
+            - "traits"는 2~3개 작성하세요.
+            `,
+          },
+          {
+            role: 'user',
+            content: `
+              [현재 사용자가 저장한 책]: ${JSON.stringify(myBooks)}
+            `,
+          },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.7,
+      });
+
+      const raw = completion.choices[0]?.message?.content;
+      if (!raw) throw new Error('No content returned from Groq');
+
+      const parsed = JSON.parse(raw) as AIBookReportDto;
+
+      return {
+        reportTitle: parsed.reportTitle || '이달의 독서 기록',
+        topIntent: {
+          label: parsed.topIntent?.label || '미정',
+          count: parsed.topIntent?.count || 0,
+          insight: parsed.topIntent?.insight || '독서 의도를 분석 중입니다.',
+        },
+        intentVsEmotionAnalysis: {
+          summary:
+            parsed.intentVsEmotionAnalysis?.summary ||
+            '의도와 감정을 분석 중입니다.',
+          details: Array.isArray(parsed.intentVsEmotionAnalysis?.details)
+            ? parsed.intentVsEmotionAnalysis.details
+            : [],
+        },
+        character: {
+          name: parsed.character?.name || '',
+          traits: Array.isArray(parsed.character?.traits)
+            ? parsed.character.traits
+            : [],
+          description: parsed.character?.description || '',
+          reason: parsed.character?.reason || '',
+        },
+        statistics: {
+          totalBooks: parsed.statistics?.totalBooks || 0,
+          mostFrequentEmotion: parsed.statistics?.mostFrequentEmotion || '없음',
+          changeSummary:
+            parsed.statistics?.changeSummary || '변화를 분석 중입니다.',
+        },
+        coachMessage: parsed.coachMessage || '다음 달에도 즐거운 독서 되세요!',
+      };
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      console.error('[AI Report Generation Error]', errorMessage);
+
+      return {
+        reportTitle: '리포트를 생성할 수 없습니다.',
+        topIntent: { label: '', count: 0, insight: '' },
+        intentVsEmotionAnalysis: {
+          summary: '오류가 발생했습니다.',
+          details: [],
+        },
+        character: {
+          name: '알 수 없음',
+          traits: [],
+          description: '',
+          reason: '',
+        },
+        statistics: {
+          totalBooks: 0,
+          mostFrequentEmotion: '',
+          changeSummary: '',
+        },
+        coachMessage: '잠시 후 다시 시도해 주세요.',
       };
     }
   }
