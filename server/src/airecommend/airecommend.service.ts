@@ -115,15 +115,13 @@ export class AirecommendService {
       );
 
       const resolveBooks = async (
-        books: any,
+        books: AIResponseBook[],
       ): Promise<FinalRecommendedBook[]> => {
         if (!books || !Array.isArray(books)) return [];
 
         const results: FinalRecommendedBook[] = [];
 
-        for (const rawBook of books) {
-          const aiBook = rawBook as AIResponseBook;
-
+        for (const aiBook of books) {
           try {
             const searchResults = await this.booksService.search(aiBook.title);
 

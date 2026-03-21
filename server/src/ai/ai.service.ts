@@ -5,6 +5,7 @@ import {
   DailyQuoteResponseDto,
 } from 'src/airecommend/dto/ai-recommend.dto';
 import { AIRecommendDraft } from 'src/airecommend/types/ai-recommend.type';
+import { SimilarBookResult } from 'src/bookshelf/dto/bookshelf-response.dto';
 import { AITagRequestDto } from './dto/ai-request.dto';
 import {
   AIBookReportDto,
@@ -241,7 +242,7 @@ export class aiService {
 
   async generateTasteBasedRecommendations(
     books: { title: string; author: string; status: string }[],
-    similarBooks: any[],
+    similarBooks: SimilarBookResult[],
   ): Promise<AITasteRecommendResponseDto> {
     try {
       const completion = await this.groq.chat.completions.create({
