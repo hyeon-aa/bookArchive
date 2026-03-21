@@ -246,9 +246,10 @@ bookArchive/
 **Funnel (3단계 독서 기록)**
 
 ```
-Step1Status → Step2Review → Step3Phrase
-  독서 상태     감상 + 감정    인상 깊은 구절
-  선택          입력           입력 → AI 태그 생성
+Step1Status  :  독서 상태 및 의도
+→ Step2Review  : 감상평 + 감정
+→ Step3Phrase  : 인상 깊은 문장
+=> AI의 한마디 및 AI 태그 생성
 ```
 
 #### explore/
