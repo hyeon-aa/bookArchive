@@ -1,10 +1,50 @@
-# 📚 bookArchive
+## 📚 bookArchive
 
-> NestJS + TypeScript + PostgreSQL(pgvector) + Groq LLM + Gemini Embedding
+> **Next.js + NestJS + TypeScript + PostgreSQL(pgvector) + Groq LLM + Gemini Embedding**
 
 ---
 
-## 🗂️ 모듈별 역할 & API
+## 🗂️ 목차
+
+- [기술 스택](#-기술-스택)
+- [프로젝트 구조](#-프로젝트-구조)
+- [서버 — 모듈별 역할 & API](#-서버--모듈별-역할--api)
+- [클라이언트 — 페이지 & Feature 모듈](#-클라이언트--페이지--feature-모듈)
+- [모듈 의존 관계](#-모듈-의존-관계)
+- [외부 서비스 연동](#-외부-서비스-연동)
+
+---
+
+## 🛠️ 기술 스택
+
+| 영역 | 기술 |
+|------|------|
+| **프론트엔드** | Next.js 14 (App Router), TypeScript, Tailwind CSS, React Query, Zustand |
+| **백엔드** | NestJS, TypeScript, Prisma |
+| **데이터베이스** | PostgreSQL + pgvector |
+| **AI** | Groq (`llama-3.3-70b-versatile`), Google Gemini (`embedding-001`) |
+| **결제** | Toss Payments |
+| **외부 API** | Naver Books API |
+| **인프라** | Docker (PostgreSQL 컨테이너) |
+
+---
+
+## 📁 프로젝트 구조
+
+```
+bookArchive/
+├── client/               # Next.js 프론트엔드
+│   ├── app/              # App Router 페이지
+│   ├── feature/          # 도메인별 API · 쿼리 · 컴포넌트
+│   └── shared/           # 전역 스토어 · 공통 컴포넌트 · 훅
+├── server/               # NestJS 백엔드
+│   └── src/              # 모듈별 소스코드
+└── docker-compose.yml    # PostgreSQL + pgvector 컨테이너
+```
+
+---
+
+## 🖥️ 서버 — 모듈별 역할 & API
 
 ### 🔐 auth — 회원가입 · 로그인 · JWT 인증
 
@@ -68,8 +108,7 @@
 | `generateTasteBasedRecommendations()` | 책장 데이터 + 벡터 추천 합쳐 취향 분석 |
 | `generateAIBookReport()` | 월간 독서 리포트 + 음식 캐릭터 부여 |
 
-**모델**: `llama-3.3-70b-versatile` (Groq)  
-**공통 설정**: `response_format: json_object`, `temperature: 0.7`
+**모델**: `llama-3.3-70b-versatile` (Groq) · `response_format: json_object` · `temperature: 0.7`
 
 ---
 
@@ -81,8 +120,7 @@
 |------|------|
 | `createEmbedding(text)` | 텍스트를 `number[]` 벡터로 변환 |
 
-**모델**: `gemini-embedding-001` (Google Gemini)  
-**사용처**: 책 추가 시 자동 임베딩 저장, 유사 도서 추천
+**모델**: `gemini-embedding-001` (Google Gemini)
 
 ---
 
@@ -152,16 +190,132 @@
 
 ---
 
-## 🧩 모듈 의존 관계
+## 🌐 클라이언트 — 페이지 & Feature 모듈
+
+---
+
+### 📄 페이지 라우팅 (app/)
+
+| 경로 | 설명 | 인증 |
+|------|------|------|
+| `/` | → `/books/search` 자동 리다이렉트 | 공개 |
+| `/login` | 로그인 | 공개 |
+| `/signup` | 회원가입 | 공개 |
+| `/books/search` | 도서 검색 (Naver API) |
+| `/bookshelf` | 내 서재 · 리스트/그리드 · 편집모드 삭제 | 
+| `/bookshelf/[id]` | 상세 조회 + Funnel 독서기록 (3단계) |
+| `/explore` | 오늘의 명언 · 취향 추천 · AI 추천 진입 | 
+| `/dashboard` | 월별 통계 · 감정 분포 · AI 리포트 |
+| `/airecommend` | 무드 선택 + 고민 입력 → AI 처리 |
+| `/airecommend/result` | AI 추천 결과 |
+| `/mypage` | 프로필 · 메뉴 |
+| `/mypage/phrases` | 인상깊은 문장 모음 |
+| `/mypage/tags` | AI 태그 버블 클라우드 |
+| `/mypage/timeline` | 월별 독서 타임라인 | 
+| `/mypage/payments` | 결제 내역 |
+| `/payment/success` | Toss 결제 성공 콜백 |
+| `/payment/fail` | Toss 결제 실패 콜백 |
+
+---
+
+### 🧩 Feature 모듈 (feature/)
+
+각 도메인은 `api.ts` · `queries.ts` · `keys.ts` · `type.ts` · `components/` 로 구성됩니다.
+
+#### auth/
+- `useGetMe()` — `AuthProvider`에서 호출, JWT 쿠키 → `useAuthStore` 동기화
+- `useLogin()` / `useSignUp()` — mutation
+
+#### books/
+- `useBookSearch(query)` — Naver Books API 검색
+
+#### bookshelf/
+
+| 함수 / 컴포넌트 | 설명 |
+|----------------|------|
+| `useMyBooks()` | 내 책장 전체 조회 |
+| `useBookshelfItem(id)` | 상세 조회 |
+| `useAddBook()` | 책 추가 mutation |
+| `useUpdateBookshelfItem()` | 감상 저장 → AI 태그 생성 trigger |
+| `useDeleteBooks()` | 복수 삭제 mutation |
+| `BooksListView` / `BooksGridView` | 뷰 전환 |
+| `BookshelfItem` | 책장 항목 카드 |
+| `AIMessageSheet` | AI 코멘트 바텀시트 |
+| `SharePreviewModal` | 공유 미리보기 |
+
+**Funnel (3단계 독서 기록)**
+
+```
+Step1Status → Step2Review → Step3Phrase
+  독서 상태     감상 + 감정    인상 깊은 구절
+  선택          입력           입력 → AI 태그 생성
+```
+
+#### explore/
+
+| 컴포넌트 | 설명 |
+|----------|------|
+| `DailyQuoteCard` | 오늘의 명언 카드 |
+| `TasteRecommendation` | 취향 기반 추천 (familiarBooks + challengeBooks) |
+| `AIRecommendButton` | `/airecommend` 진입 버튼 |
+
+#### dashboard/
+
+| 컴포넌트 | 설명 |
+|----------|------|
+| `ReadingOverView` | 총 권수 · 완독률 요약 |
+| `MonthlyChart` | 월별 독서 차트 |
+| `EmotionSummary` | 감정 통계 |
+| `AIReportCard` | 월간 AI 독서 리포트 |
+
+#### payment/
+
+| 컴포넌트 | 설명 |
+|----------|------|
+| `MembershipBanner` | 멤버십 가입 배너 |
+| `PaymentModal` | 결제 진행 모달 |
+| `PaymentSuccessContent` | 결제 성공 화면 |
+| `PaymentFailContent` | 결제 실패 화면 |
+
+#### mypage/
+
+| 컴포넌트 | 설명 |
+|----------|------|
+| `MyPageProfile` | 프로필 카드 |
+| `MyPageMenuItem` | 메뉴 항목 |
+| `BubbleTagCloud` | AI 태그 버블 클라우드 |
+| `PhraseItem` | 인상깊은 문장 카드 |
+
+---
+
+### 🗃️ 전역 상태 (shared/store — Zustand)
+
+| 스토어 | 상태 | 설명 |
+|--------|------|------|
+| `useAuthStore` | `isLoggedIn` · `user` · `token` | 로그인 상태 전역 관리 |
+| `useModalStore` | `content` | 전역 모달 (`ModalProvider`에서 렌더링) |
+| `useRecommendStore` | `result` · `payload` | AI 추천 결과 페이지 간 전달 |
+
+**인증 흐름**
+```
+로그인 성공 → JWT 쿠키 저장
+→ AuthProvider 마운트 → useGetMe() 호출
+→ useAuthStore.setLogin() → 전역 isLoggedIn = true
+→ 🔒 라우터에서 isLoggedIn 체크
+```
+
+---
+
+## 🧩 모듈 의존 관계 (서버)
 
 ```
 AppModule
-├── PrismaModule          (global)
+├── PrismaModule (global)
 ├── AuthModule
 ├── BooksModule
 ├── BookshelfModule       imports: [AiModule, EmbeddingModule]
 │                         exports: [BookshelfService]
-├── AirecommendModule     imports: [BooksModule, BookshelfModule, AiModule, EmbeddingModule]
+├── AirecommendModule     imports: [BooksModule, BookshelfModule, AiModule, EmbeddingModule, PrismaModule]
 ├── AiModule              exports: [aiService]
 ├── EmbeddingModule       exports: [EmbeddingService]
 ├── DashboardModule
@@ -173,10 +327,10 @@ AppModule
 
 ## 🌐 외부 서비스 연동
 
-| 서비스 | 용도 | 사용 모듈 |
+| 서비스 | 용도 | 사용 위치 |
 |--------|------|----------|
-| Naver Books API | 도서 메타데이터 검색 | `books` |
-| Groq (`llama-3.3-70b`) | AI 코멘트·추천·리포트·명언 | `ai` |
-| Google Gemini (`embedding-001`) | 텍스트 → 벡터 변환 | `embedding` |
-| Toss Payments | 멤버십 결제 처리 | `payment` |
-| PostgreSQL + pgvector | 데이터 저장 · 벡터 유사도 검색 | 전체 |
+| Naver Books API | 도서 메타데이터 검색 | `server/books` · `client/feature/books` |
+| Groq (`llama-3.3-70b`) | AI 코멘트·추천·리포트·명언 | `server/ai` |
+| Google Gemini (`embedding-001`) | 텍스트 → 벡터 변환 | `server/embedding` |
+| Toss Payments | 멤버십 결제 처리 | `server/payment` · `client/feature/payment` |
+| PostgreSQL + pgvector | 데이터 저장 · 벡터 유사도 검색 | `server` 전체 |
