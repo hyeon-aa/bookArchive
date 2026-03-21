@@ -24,4 +24,12 @@ export class UpdateBookshelfDto {
   @IsOptional()
   @IsDateString()
   endDate?: string;
+
+  @IsOptional()
+  @IsString()
+  intent?: string;
+
+  @IsOptional()
+  @IsString()
+  sub?: string;
 }
