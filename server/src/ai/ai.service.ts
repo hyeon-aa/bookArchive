@@ -5,12 +5,12 @@ import {
   DailyQuoteResponseDto,
 } from 'src/airecommend/dto/ai-recommend.dto';
 import { AIRecommendDraft } from 'src/airecommend/types/ai-recommend.type';
-import { AITagRequestDto } from './ai-request.dto';
+import { AITagRequestDto } from './dto/ai-request.dto';
 import {
   AIBookReportDto,
   AITagResponseDto,
   AITasteRecommendResponseDto,
-} from './ai-response.dto';
+} from './dto/ai-response.dto';
 
 @Injectable()
 export class aiService {

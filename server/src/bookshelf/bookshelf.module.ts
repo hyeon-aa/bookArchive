@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
-import { aiService } from 'src/ai/ai.service';
-import { EmbeddingService } from 'src/embedding/embedding.service';
+import { AiModule } from 'src/ai/ai.module';
+import { EmbeddingModule } from 'src/embedding/embedding.module';
 import { BookshelfController } from './bookshelf.controller';
 import { BookshelfService } from './bookshelf.service';
 
 @Module({
+  imports: [EmbeddingModule, AiModule],
   controllers: [BookshelfController],
-  providers: [BookshelfService, aiService, EmbeddingService],
+  providers: [BookshelfService],
+  exports: [BookshelfService],
 })
 export class BookshelfModule {}
