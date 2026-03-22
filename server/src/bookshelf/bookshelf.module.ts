@@ -5,7 +5,7 @@ import { BookshelfController } from './bookshelf.controller';
 import { BookshelfService } from './bookshelf.service';
 
 @Module({
-  imports: [EmbeddingModule, AiModule],
+  imports: [AiModule, EmbeddingModule],
   controllers: [BookshelfController],
   providers: [BookshelfService],
   exports: [BookshelfService],

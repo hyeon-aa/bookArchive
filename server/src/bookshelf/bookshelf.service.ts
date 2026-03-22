@@ -236,10 +236,10 @@ export class BookshelfService {
         startDate: dto.startDate ? new Date(dto.startDate) : undefined,
         endDate: dto.endDate ? new Date(dto.endDate) : undefined,
         phrase: dto.phrase,
+        ...(aiComment !== undefined && { aiComment }),
+        ...(aiTags !== undefined && { aiTags: { set: aiTags } }),
         intent: dto.intent,
         sub: dto.sub,
-        aiComment,
-        aiTags,
       },
       include: { book: true },
     });
@@ -262,7 +262,7 @@ export class BookshelfService {
     userId: number,
     limit: number = 5,
   ): Promise<SimilarBookResult[]> {
-    // 1. 타입을 명시적으로 정의 (embedding은 ::text로 가져오니 string임)
+    // 1. 타입을 명시적으로 정의 (embedding은 ::text로 가져오니 string임 -> 문자열로 가져온거다.)
     const userLatestVector = await this.prisma.$queryRaw<
       { embedding: string }[]
     >`

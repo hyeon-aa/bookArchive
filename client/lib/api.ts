@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosResponse } from "axios";
 import { getCookie } from "cookies-next";
 import { BaseResponse } from "./response";
 
-const API_URL = "http://localhost:4000";
+export const API_URL = "http://localhost:4000";
 
 export const axiosInstance = axios.create({
   baseURL: API_URL,

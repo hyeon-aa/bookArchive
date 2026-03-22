@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { BooksModule } from './books/books.module';
 import { BookshelfModule } from './bookshelf/bookshelf.module';
+import { ChatModule } from './chat/chat.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { MypageModule } from './mypage/mypage.module';
 import { PaymentModule } from './payment/payment.module';
@@ -25,6 +26,7 @@ import { PrismaModule } from './prisma/prisma.module';
     DashboardModule,
     PaymentModule,
     MypageModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

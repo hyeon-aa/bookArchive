@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import Groq from 'groq-sdk'; // npm install groq-sdk
+import Groq from 'groq-sdk';
 import {
   AiReportRequestDto,
   DailyQuoteResponseDto,
@@ -293,6 +293,18 @@ export class aiService {
         challengeBooks: [],
       };
     }
+  }
+
+  async generateStreamCompletion(
+    messages: Groq.Chat.ChatCompletionMessageParam[],
+  ) {
+    return await this.groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages,
+      stream: true,
+      temperature: 0.7,
+      max_tokens: 1024,
+    });
   }
 
   async generateAIBookReport(
