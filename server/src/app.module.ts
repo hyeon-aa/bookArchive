@@ -10,6 +10,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PaymentModule } from './payment/payment.module';
 import { MypageModule } from './mypage/mypage.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { MypageModule } from './mypage/mypage.module';
     DashboardModule,
     PaymentModule,
     MypageModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
