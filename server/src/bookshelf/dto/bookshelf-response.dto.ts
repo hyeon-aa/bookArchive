@@ -18,3 +18,8 @@ export class BookshelfWithLevelResponseDto extends BookshelfResponseDto {
   currentCount: number;
   newLevel?: number;
 }
+
+export interface SimilarBookResult {
+  title: string;
+  author: string;
+}

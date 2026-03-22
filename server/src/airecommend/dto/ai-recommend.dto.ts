@@ -23,3 +23,42 @@ export class AITasteRecommendResponseDto {
   familiarBooks: RecommendedBookDto[];
   challengeBooks: RecommendedBookDto[];
 }
+
+export class AiReportResponseDto {
+  reportTitle: string;
+  topIntent: {
+    label: string;
+    count: number;
+    insight: string;
+  };
+  intentVsEmotionAnalysis: {
+    summary: string;
+    details: string[];
+  };
+  character: {
+    name: string;
+    traits: string[];
+    description: string;
+    reason: string;
+  };
+  statistics: {
+    totalBooks: number;
+    mostFrequentEmotion: string;
+    changeSummary: string;
+  };
+  coachMessage: string;
+}
+
+export class BookInfoDto {
+  title: string;
+  description: string;
+  author: string;
+  phrase: string | null;
+  emotion: string | null;
+  intent: string | null;
+  sub: string | null;
+}
+
+export class AiReportRequestDto {
+  books: BookInfoDto[];
+}

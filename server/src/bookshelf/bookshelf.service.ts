@@ -8,13 +8,9 @@ import { AddBookDto } from './dto/add-book.dto';
 import {
   BookshelfResponseDto,
   BookshelfWithLevelResponseDto,
+  SimilarBookResult,
 } from './dto/bookshelf-response.dto';
 import { UpdateBookshelfDto } from './dto/update-bookshelf.dto';
-
-interface SimilarBookResult {
-  title: string;
-  author: string;
-}
 
 @Injectable()
 export class BookshelfService {
@@ -189,6 +185,8 @@ export class BookshelfService {
       endDate: item.endDate,
       createdAt: item.createdAt,
       aiComment: item.aiComment,
+      intent: item.intent,
+      sub: item.sub,
       book: {
         isbn: item.book.isbn,
         title: item.book.title,
@@ -240,6 +238,8 @@ export class BookshelfService {
         phrase: dto.phrase,
         aiComment: aiComment ?? null,
         aiTags: aiTags ? { set: aiTags } : { set: [] },
+        intent: dto.intent,
+        sub: dto.sub,
       },
       include: { book: true },
     });

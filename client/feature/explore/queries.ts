@@ -23,3 +23,10 @@ export const useRecommendByEmotion = () => {
       exploreApi.recommendByEmotion(mood, talk),
   });
 };
+
+export const useAIReport = () => {
+  return useQuery({
+    queryKey: exploreKeys.aireport(),
+    queryFn: exploreApi.getReport,
+  });
+};

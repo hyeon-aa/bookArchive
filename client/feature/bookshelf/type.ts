@@ -8,6 +8,8 @@ export interface UpdateBookshelfRequest {
   endDate?: string;
   title?: string;
   phrase?: string;
+  intent?: string;
+  sub?: string;
 }
 
 export interface BookItem {
@@ -31,6 +33,8 @@ export interface BookshelfItemResponse {
   aiTags?: string[] | null;
   aiComment?: string | null;
   book: BookItem;
+  intent: string | null;
+  sub: string | null;
 }
 
 export interface BookshelfItemWithLevelResponse extends BookshelfItemResponse {
