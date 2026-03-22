@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import Groq from 'groq-sdk'; // npm install groq-sdk
 import { DailyQuoteResponseDto } from 'src/airecommend/dto/ai-recommend.dto';
 import { AIRecommendDraft } from 'src/airecommend/types/ai-recommend.type';
-import { AITagRequestDto } from './ai-request.dto';
+import { AITagRequestDto } from './dto/ai-request.dto';
 import {
   AITagResponseDto,
   AITasteRecommendResponseDto,
-} from './ai-response.dto';
+} from './dto/ai-response.dto';
 
 @Injectable()
 export class aiService {
@@ -288,5 +288,17 @@ export class aiService {
         challengeBooks: [],
       };
     }
+  }
+
+  async generateStreamCompletion(
+    messages: Groq.Chat.ChatCompletionMessageParam[],
+  ) {
+    return await this.groq.chat.completions.create({
+      model: 'llama-3.3-70b-versatile',
+      messages,
+      stream: true,
+      temperature: 0.7,
+      max_tokens: 1024,
+    });
   }
 }
