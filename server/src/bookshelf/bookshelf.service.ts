@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { aiService } from 'src/ai/ai.service';
+import { AiService } from 'src/ai/ai.service';
 import { EmbeddingService } from 'src/embedding/embedding.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AITagResponseDto } from '../ai/dto/ai-response.dto';
@@ -16,7 +16,7 @@ import { UpdateBookshelfDto } from './dto/update-bookshelf.dto';
 export class BookshelfService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly aiService: aiService,
+    private readonly aiService: AiService,
     private readonly embeddingService: EmbeddingService,
   ) {}
 
