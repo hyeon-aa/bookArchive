@@ -262,7 +262,7 @@ export class BookshelfService {
     userId: number,
     limit: number = 5,
   ): Promise<SimilarBookResult[]> {
-    // 1. 타입을 명시적으로 정의 (embedding은 ::text로 가져오니 string임)
+    // 1. 타입을 명시적으로 정의 (embedding은 ::text로 가져오니 string임 -> 문자열로 가져온거다.)
     const userLatestVector = await this.prisma.$queryRaw<
       { embedding: string }[]
     >`
