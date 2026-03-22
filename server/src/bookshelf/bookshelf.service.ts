@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { aiService } from 'src/ai/ai.service';
 import { EmbeddingService } from 'src/embedding/embedding.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AITagResponseDto } from '../ai/ai-response.dto';
+import { AITagResponseDto } from '../ai/dto/ai-response.dto';
 import { AddBookDto } from './dto/add-book.dto';
 import {
   BookshelfResponseDto,
@@ -238,8 +238,8 @@ export class BookshelfService {
         startDate: dto.startDate ? new Date(dto.startDate) : undefined,
         endDate: dto.endDate ? new Date(dto.endDate) : undefined,
         phrase: dto.phrase,
-        aiComment,
-        aiTags,
+        aiComment: aiComment ?? null,
+        aiTags: aiTags ? { set: aiTags } : { set: [] },
       },
       include: { book: true },
     });
