@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
-import { aiService } from 'src/ai/ai.service';
+import { AiService } from 'src/ai/ai.service';
 import { EmbeddingService } from 'src/embedding/embedding.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ChatMessageDto } from './dto/chat-dto';
@@ -21,7 +21,7 @@ interface RelatedBook {
 @Injectable()
 export class ChatService {
   constructor(
-    private readonly aiService: aiService,
+    private readonly aiService: AiService,
     private readonly embeddingService: EmbeddingService,
     private readonly prisma: PrismaService,
   ) {}

@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/lib/api";
 import { getCookie } from "cookies-next";
 import { ChevronLeft, SendHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -36,54 +37,72 @@ export default function ChatPage() {
       { role: "assistant", content: "" },
     ]);
 
-    const token = getCookie("accessToken");
-    const response = await fetch("http://localhost:4000/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ message: userMessage, history }),
-    });
+    try {
+      const token = getCookie("accessToken");
+      const response = await fetch(`${API_URL}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ message: userMessage, history }),
+      });
 
-    const reader = response.body!.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
-      const events = buffer.split("\n\n");
-      buffer = events.pop() ?? "";
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
 
-      for (const event of events) {
-        const line = event.replace(/^data: /, "").trim();
-        if (!line) continue;
+        for (const event of events) {
+          const line = event.replace(/^data: /, "").trim();
+          if (!line) continue;
 
-        const chunk = JSON.parse(line);
-        if (chunk.done) {
-          setIsStreaming(false);
-          bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-          return;
-        }
-        if (chunk.text) {
-          //마지막 요소(AI 자리)에 글자를 계속 이어붙인다.
-          setMessages((prev) => {
-            const updated = [...prev];
-            const last = updated[updated.length - 1];
-            if (last.role === "assistant") {
-              updated[updated.length - 1] = {
-                ...last,
-                content: last.content + chunk.text,
-              };
-            }
-            return updated;
-          });
-          bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+          const chunk = JSON.parse(line);
+          if (chunk.done) {
+            setIsStreaming(false);
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+            return;
+          }
+          if (chunk.text) {
+            //마지막 요소(AI 자리)에 글자를 계속 이어붙인다.
+            setMessages((prev) => {
+              const updated = [...prev];
+              const last = updated[updated.length - 1];
+              if (last.role === "assistant") {
+                updated[updated.length - 1] = {
+                  ...last,
+                  content: last.content + chunk.text,
+                };
+              }
+              return updated;
+            });
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+          }
         }
       }
+    } catch (error) {
+      // 에러 발생 시 AI 메시지 자리에 에러 문구 표시
+      setMessages((prev) => {
+        const updated = [...prev];
+        const last = updated[updated.length - 1];
+        if (last.role === "assistant" && last.content === "") {
+          updated[updated.length - 1] = {
+            ...last,
+            content: "메시지를 전송하지 못했어요. 다시 시도해 주세요.",
+          };
+        }
+        return updated;
+      });
+      console.error("[Chat Error]", error);
+    } finally {
+      setIsStreaming(false);
     }
   };
 

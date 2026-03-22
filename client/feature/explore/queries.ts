@@ -28,5 +28,6 @@ export const useAIReport = () => {
   return useQuery({
     queryKey: exploreKeys.aireport(),
     queryFn: exploreApi.getReport,
+    staleTime: 1000 * 60 * 60,
   });
 };
