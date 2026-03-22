@@ -10,7 +10,6 @@
 - [프로젝트 구조](#-프로젝트-구조)
 - [서버 — 모듈별 역할 & API](#-서버--모듈별-역할--api)
 - [클라이언트 — 페이지 & Feature 모듈](#-클라이언트--페이지--feature-모듈)
-- [모듈 의존 관계](#-모듈-의존-관계)
 - [외부 서비스 연동](#-외부-서비스-연동)
 
 ---
@@ -177,6 +176,25 @@ bookArchive/
 
 ---
 
+### 💬 chat — RAG 기반 AI 채팅
+
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| `POST` | `/chat` | 책장 기반 AI 채팅 (SSE 스트리밍) |
+
+**의존 모듈**: `AiModule`, `EmbeddingModule`
+
+<details>
+<summary>동작 흐름</summary>
+
+1. 사용자 질문을 Gemini로 벡터화
+2. pgvector `<=>` 연산자로 내 책장에서 유사 도서 5권 추출
+3. 도서 정보(상태·감상·감정·AI태그·독서기간)를 컨텍스트로 구성
+4. Groq LLM에 시스템 프롬프트 + 현재 세션 대화 히스토리 + 컨텍스트 전달
+5. SSE(Server-Sent Events)로 응답을 토큰 단위로 스트리밍
+
+</details>
+
 ### 🔧 prisma / common — 전역 인프라 · 공통 유틸
 
 **prisma/**
@@ -198,13 +216,13 @@ bookArchive/
 
 | 경로 | 설명 | 인증 |
 |------|------|------|
-| `/` | → `/books/search` 자동 리다이렉트 | 공개 |
-| `/login` | 로그인 | 공개 |
-| `/signup` | 회원가입 | 공개 |
+| `/` | → `/books/search` 자동 리다이렉트 |
+| `/login` | 로그인 |
+| `/signup` | 회원가입 |
 | `/books/search` | 도서 검색 (Naver API) |
-| `/bookshelf` | 내 서재 · 리스트/그리드 · 편집모드 삭제 | 
+| `/bookshelf` | 내 서재 · 리스트/그리드 모드 · 편집모드 삭제 | 
 | `/bookshelf/[id]` | 상세 조회 + Funnel 독서기록 (3단계) |
-| `/explore` | 오늘의 명언 · 취향 추천 · AI 추천 진입 | 
+| `/explore` | 오늘의 명언 · 취향 추천 · 내 감정에 따른 AI의 도서 추천 진입| 
 | `/dashboard` | 월별 통계 · 감정 분포 · AI 리포트 |
 | `/airecommend` | 무드 선택 + 고민 입력 → AI 처리 |
 | `/airecommend/result` | AI 추천 결과 |
@@ -215,6 +233,7 @@ bookArchive/
 | `/mypage/payments` | 결제 내역 |
 | `/payment/success` | Toss 결제 성공 콜백 |
 | `/payment/fail` | Toss 결제 실패 콜백 |
+| `/chat` | 책장 기반 AI 채팅 (스트리밍) |
 
 ---
 
@@ -242,6 +261,7 @@ bookArchive/
 | `BookshelfItem` | 책장 항목 카드 |
 | `AIMessageSheet` | AI 코멘트 바텀시트 |
 | `SharePreviewModal` | 공유 미리보기 |
+
 
 **Funnel (3단계 독서 기록)**
 
@@ -289,6 +309,16 @@ Step1Status  :  독서 상태 및 의도
 
 ---
 
+#### chat/
+
+| 컴포넌트 / 기능 | 설명 |
+|----------------|------|
+| `ChatPage` | 실시간 스트리밍 채팅 UI |
+
+- 대화 히스토리를 매 요청마다 함께 전송해 문맥 유지
+- SSE 스트림을 청크 단위로 파싱해 타이핑 애니메이션 효과 구현
+- Shift+Enter 줄바꿈 / Enter 전송
+
 ### 🗃️ 전역 상태 (shared/store — Zustand)
 
 | 스토어 | 상태 | 설명 |
@@ -303,25 +333,6 @@ Step1Status  :  독서 상태 및 의도
 → AuthProvider 마운트 → useGetMe() 호출
 → useAuthStore.setLogin() → 전역 isLoggedIn = true
 → 🔒 라우터에서 isLoggedIn 체크
-```
-
----
-
-## 🧩 모듈 의존 관계 (서버)
-
-```
-AppModule
-├── PrismaModule (global)
-├── AuthModule
-├── BooksModule
-├── BookshelfModule       imports: [AiModule, EmbeddingModule]
-│                         exports: [BookshelfService]
-├── AirecommendModule     imports: [BooksModule, BookshelfModule, AiModule, EmbeddingModule, PrismaModule]
-├── AiModule              exports: [aiService]
-├── EmbeddingModule       exports: [EmbeddingService]
-├── DashboardModule
-├── PaymentModule
-└── MypageModule
 ```
 
 ---
