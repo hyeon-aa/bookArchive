@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthStore } from "@/shared/store/useAuthStore";
-import { ChevronLeft, User } from "lucide-react";
+import { ChevronLeft, MessageCircle, User } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode } from "react";
 import { BottomNav } from "../../shared/components/layout/BottomNav";
@@ -44,20 +44,29 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <h1 className="text-lg font-bold text-gray-800">책 아카이브</h1>
           )}
 
-          <button
-            onClick={handleProfileClick}
-            className="flex items-center justify-center min-w-[44px] transition-all active:scale-95"
-          >
-            {isLoggedIn ? (
-              <div className="p-1.5 bg-gray-100 rounded-full hover:bg-gray-200">
-                <User size={22} className="text-gray-600" />
-              </div>
-            ) : (
-              <span className="text-sm font-medium text-[rgb(var(--primary-sage))] hover:text-[rgb(var(--secondary-sage-light))]">
-                로그인
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => router.push("/chat")}
+              className="p-1.5 rounded-full hover:bg-gray-100 transition-all active:scale-95"
+            >
+              <MessageCircle size={22} className="text-gray-600" />
+            </button>
+
+            <button
+              onClick={handleProfileClick}
+              className="flex items-center justify-center min-w-[44px] transition-all active:scale-95"
+            >
+              {isLoggedIn ? (
+                <div className="p-1.5 bg-gray-100 rounded-full hover:bg-gray-200">
+                  <User size={22} className="text-gray-600" />
+                </div>
+              ) : (
+                <span className="text-sm font-medium text-[rgb(var(--primary-sage))] hover:text-[rgb(var(--secondary-sage-light))]">
+                  로그인
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
