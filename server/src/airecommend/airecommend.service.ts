@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { aiService } from '../ai/ai.service';
+import { AiService } from '../ai/ai.service';
 import { BooksService } from '../books/books.service';
 import { BookshelfService } from '../bookshelf/bookshelf.service';
 import {
@@ -31,7 +31,7 @@ interface FinalRecommendedBook {
 @Injectable()
 export class AirecommendService {
   constructor(
-    private readonly aiService: aiService,
+    private readonly aiService: AiService,
     private readonly booksService: BooksService,
     private readonly BookShelfService: BookshelfService,
     private readonly prisma: PrismaService,
@@ -166,8 +166,26 @@ export class AirecommendService {
   }
 
   async getAIReport(userId: number): Promise<AiReportResponseDto> {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+
     const result = await this.prisma.bookshelf.findMany({
-      where: { userId },
+      where: {
+        userId,
+        createdAt: {
+          gte: startOfMonth,
+          lte: endOfMonth,
+        },
+      },
       orderBy: { createdAt: 'desc' },
       select: {
         phrase: true,
