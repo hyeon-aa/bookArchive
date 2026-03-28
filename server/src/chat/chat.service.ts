@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
 import { AiService } from 'src/ai/ai.service';
@@ -94,6 +94,15 @@ export class ChatService {
 
   // SSE 헤더 설정
   async streamChat(userId: number, dto: ChatMessageDto, res: Response) {
+    const roomId = Number(dto.roomId);
+
+    // 2. 만약 roomId가 NaN이거나 0(비어있음)이라면 에러 응답 후 종료
+    if (!roomId || isNaN(roomId)) {
+      console.error('유효하지 않은 roomId:', dto.roomId);
+      res.status(400).end(); // 에러 상태코드를 보내서 프론트에 알려줌
+      return;
+    }
+
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -105,6 +114,10 @@ export class ChatService {
 
       const context = this.buildContext(relatedBooks);
       const history = dto.history ?? [];
+
+      await this.prisma.chatMessage.create({
+        data: { roomId: dto.roomId, role: 'user', content: dto.message },
+      });
 
       const messages = [
         {
@@ -132,19 +145,53 @@ export class ChatService {
 
       const stream = await this.aiService.generateStreamCompletion(messages);
 
+      let fullResponse = '';
+
       for await (const chunk of stream) {
         const text = chunk.choices[0].delta?.content;
         //chunk 구조: { choices: [{ delta: { content: "안" } }] }
         if (text) {
+          fullResponse += text;
           res.write(`data: ${JSON.stringify({ text })}\n\n`);
           //SSE 형식: "data: {text}\n\n"
         }
       }
+
+      await this.prisma.chatMessage.create({
+        data: { roomId: dto.roomId, role: 'assistant', content: fullResponse },
+      });
+
       res.write(`data: ${JSON.stringify({ done: true, relatedBooks })}\n\n`);
     } catch (error) {
       console.log('[Stream Error]', error);
     } finally {
       res.end();
     }
+  }
+
+  async createRooms(userId: number) {
+    return this.prisma.chatRoom.create({
+      data: { userId },
+    });
+  }
+
+  async getRooms(userId: number) {
+    return this.prisma.chatRoom.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getChatRoomItem(userId: number, roomId: number) {
+    const room = await this.prisma.chatRoom.findFirst({
+      where: { id: roomId, userId },
+    });
+
+    if (!room) throw new NotFoundException('채팅방을 찾을 수 없어요.');
+
+    return this.prisma.chatMessage.findMany({
+      where: { roomId },
+      orderBy: { createdAt: 'asc' },
+    });
   }
 }
