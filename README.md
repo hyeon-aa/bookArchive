@@ -16,6 +16,16 @@
     <img src="https://img.shields.io/badge/Toss_Payments-0064FF?style=flat-square&logo=toss&logoColor=white" alt="Toss" />
   </p>
   
+<div align="center">
+  <p>🔍 <b>시스템 설계와 상세 로직</b></p>
+  <a href="./ARCHITECTURE.md">
+    <img src="https://img.shields.io/badge/Architecture-보려면_클릭하세요!-7C9885?style=for-the-badge&logo=github&logoColor=white" />
+  </a>
+  <p><sub>👉 위 버튼을 클릭하면 상세 아키텍처 문서로 이동!</sub></p>
+</div>
+
+</div>
+  
 </div>
 
 ---
@@ -57,3 +67,5 @@ bookArchive/
 └── ⚙️ server/      # NestJS (Modular Architecture)
     ├── src/        # Domain Modules (Auth, Chat, AI, Payment...)
     └── prisma/     # Vector DB Schema & Migrations
+```
+
