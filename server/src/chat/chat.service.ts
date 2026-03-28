@@ -115,8 +115,19 @@ export class ChatService {
       const context = this.buildContext(relatedBooks);
       const history = dto.history ?? [];
 
+      const messageCount = await this.prisma.chatMessage.count({
+        where: { roomId },
+      });
+
+      if (messageCount === 0) {
+        await this.prisma.chatRoom.update({
+          where: { id: roomId },
+          data: { title: dto.message.slice(0, 20) },
+        });
+      }
+
       await this.prisma.chatMessage.create({
-        data: { roomId: dto.roomId, role: 'user', content: dto.message },
+        data: { roomId, role: 'user', content: dto.message },
       });
 
       const messages = [
@@ -158,7 +169,7 @@ export class ChatService {
       }
 
       await this.prisma.chatMessage.create({
-        data: { roomId: dto.roomId, role: 'assistant', content: fullResponse },
+        data: { roomId, role: 'assistant', content: fullResponse },
       });
 
       res.write(`data: ${JSON.stringify({ done: true, relatedBooks })}\n\n`);
