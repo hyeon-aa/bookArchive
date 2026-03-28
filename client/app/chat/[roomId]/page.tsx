@@ -91,6 +91,7 @@ export default function ChatRoomPage() {
             queryClient.invalidateQueries({
               queryKey: chatKeys.messages(roomId),
             });
+            queryClient.invalidateQueries({ queryKey: chatKeys.rooms() });
             bottomRef.current?.scrollIntoView({ behavior: "smooth" });
             return;
           }
