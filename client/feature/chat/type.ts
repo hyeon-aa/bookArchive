@@ -21,3 +21,28 @@ export interface ChatStreamChunk {
   error?: string;
   relatedBooks?: RelatedBook[];
 }
+
+export interface ChatRoom {
+  id: number;
+  userId: number;
+  title: string;
+  createdAt: string;
+}
+
+export interface ChatMessageRecord {
+  id: number;
+  roomId: number;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+}
+
+export interface SendMessageRequest {
+  roomId: number;
+  message: string;
+  history: { role: "user" | "assistant"; content: string }[];
+}
+
+export type ChatRoomsResponse = ChatRoom[];
+export type ChatMessagesResponse = ChatMessageRecord[];
+export type CreateRoomResponse = ChatRoom;
