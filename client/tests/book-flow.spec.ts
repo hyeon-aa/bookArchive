@@ -1,16 +1,19 @@
 import { expect, test } from "@playwright/test";
 
 test("책 검색부터 기록, 삭제까지 전체 워크플로우 테스트", async ({ page }) => {
+  const email = process.env.E2E_EMAIL;
+  const password = process.env.E2E_PASSWORD;
+  if (!email || !password) {
+    throw new Error("E2E_EMAIL/E2E_PASSWORD 환경변수가 필요합니다.");
+  }
   // 1. 페이지 접속 및 로그인
   await page.goto("http://localhost:3000/books/search");
   await page.getByRole("button", { name: "로그인" }).click();
 
-  await page
-    .getByRole("textbox", { name: "example@email.com" })
-    .fill("test3@test.com");
+  await page.getByRole("textbox", { name: "example@email.com" }).fill(email);
   await page
     .getByRole("textbox", { name: "비밀번호를 입력하세요" })
-    .fill("test3333");
+    .fill(password);
   await page.getByRole("button", { name: "로그인" }).click();
 
   // 2. '돈의 방정식' 검색 및 '읽는 중' 등록
@@ -63,8 +66,8 @@ test("책 검색부터 기록, 삭제까지 전체 워크플로우 테스트", a
   await page.getByRole("button", { name: "지금 바로 기록하기" }).click();
 
   // 기록 상세 입력
-  await page.getByRole("textbox").first().fill("2026-03-04");
-  await page.getByRole("textbox").nth(1).fill("2026-03-07");
+  await page.getByLabel("시작한 날").fill("2026-03-04");
+  await page.getByLabel("완독한 날").fill("2026-03-07");
   await page.getByRole("button", { name: "🔗 연결" }).click();
   await page.getByRole("button", { name: "영화/드라마 원작 ✓" }).click();
   await page.getByRole("button", { name: "다음" }).click();
@@ -82,7 +85,7 @@ test("책 검색부터 기록, 삭제까지 전체 워크플로우 테스트", a
   // 5. 내 서재에서 도구 확인 및 삭제 테스트
   await page.goto("http://localhost:3000/books/search");
   await page.getByRole("button", { name: "선택" }).click();
-  await page.locator("div").filter({ hasText: "트럼프 2.0" }).nth(5).click();
+  await page.getByText("트럼프 2.0 시대").first().click();
   await page.getByRole("button", { name: "권 삭제하기" }).click();
   await page.getByRole("button", { name: "삭제하기", exact: true }).click();
 
