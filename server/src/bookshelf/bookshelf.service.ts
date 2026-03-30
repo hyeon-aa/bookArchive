@@ -209,7 +209,12 @@ export class BookshelfService {
     let aiComment: string | undefined;
     let aiTags: string[] | undefined;
 
-    if (dto.comment || dto.emotion) {
+    const isCommentChanged =
+      dto.comment !== undefined && dto.comment !== item.comment;
+    const isEmotionChanged =
+      dto.emotion !== undefined && dto.emotion !== item.emotion;
+
+    if (isCommentChanged || isEmotionChanged) {
       try {
         const aiResult: AITagResponseDto =
           await this.aiService.generateCommentAndTags({
