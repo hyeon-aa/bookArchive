@@ -46,7 +46,7 @@ export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
   const {
     control,
     handleSubmit,
-    formState: { isValid },
+    formState: { isValid, dirtyFields },
   } = methods;
 
   const status = useWatch({
@@ -57,6 +57,8 @@ export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
   const totalSteps = isDone ? 3 : 1;
 
   const onSubmit = (data: UpdateBookshelfRequest) => {
+    const isReviewChanged = !!(dirtyFields.emotion || dirtyFields.comment);
+
     const finalPayload = {
       ...data,
       comment: isDone ? data.comment : undefined,
@@ -68,8 +70,9 @@ export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
     updateBook(finalPayload, {
       onSuccess: (res) => {
         const handleNextStep = () => {
-          if (res?.aiComment) setAIMessage(res.aiComment);
-          else router.push("/bookshelf");
+          if (res?.aiComment && isReviewChanged) {
+            setAIMessage(res.aiComment);
+          } else router.push("/bookshelf");
         };
 
         if (res?.isLevelUp) {
