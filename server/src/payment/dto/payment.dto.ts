@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 
 export class ConfirmPaymentDto {
   @IsString()
@@ -21,7 +21,6 @@ export class CancelPaymentDto {
 
   @IsString()
   @IsNotEmpty()
-  @IsOptional()
   cancelReason: string;
 }
 

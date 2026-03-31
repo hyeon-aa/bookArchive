@@ -1,11 +1,23 @@
+import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
+  ValidateNested,
 } from 'class-validator';
+
+class ChatHistoryItemDto {
+  @IsEnum(['user', 'assistant'])
+  role: 'user' | 'assistant';
+
+  @IsString()
+  @IsNotEmpty()
+  content: string;
+}
 
 export class ChatMessageDto {
   @IsInt()
@@ -18,5 +30,7 @@ export class ChatMessageDto {
 
   @IsOptional()
   @IsArray()
-  history?: { role: 'user' | 'assistant'; content: string }[];
+  @ValidateNested({ each: true })
+  @Type(() => ChatHistoryItemDto)
+  history?: ChatHistoryItemDto[];
 }
