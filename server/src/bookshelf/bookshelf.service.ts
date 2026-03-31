@@ -267,27 +267,27 @@ export class BookshelfService {
     userId: number,
     limit: number = 5,
   ): Promise<SimilarBookResult[]> {
-    // 1. 타입을 명시적으로 정의 (embedding은 ::text로 가져오니 string임 -> 문자열로 가져온거다.)
-    const userLatestVector = await this.prisma.$queryRaw<
-      { embedding: string }[]
-    >`
-    SELECT "embedding"::text 
-    FROM "BookEmbedding" 
-    WHERE "userId" = ${userId} 
-    ORDER BY "createdAt" DESC 
-    LIMIT 1
+    const userAvgVector = await this.prisma.$queryRaw<{ embedding: string }[]>`
+    SELECT AVG(embedding)::text as embedding
+    FROM (
+      SELECT embedding
+      FROM "BookEmbedding"
+      WHERE "userId" = ${userId}
+      ORDER BY "createdAt" DESC
+      LIMIT 5
+    ) t
   `;
 
-    if (!userLatestVector || userLatestVector.length === 0) return [];
+    if (!userAvgVector || userAvgVector.length === 0) return [];
 
-    const vectorStr = userLatestVector[0].embedding;
+    const avgVector = userAvgVector[0].embedding;
 
     const similarBooks = await this.prisma.$queryRaw<SimilarBookResult[]>`
     SELECT b.title, b.author
     FROM "Book" b
     JOIN "BookEmbedding" be ON b.id = be."bookId"
     WHERE be."userId" != ${userId}
-    ORDER BY be.embedding <=> ${vectorStr}::vector
+    ORDER BY be.embedding <=> ${avgVector}::vector
     LIMIT ${limit}
   `;
 

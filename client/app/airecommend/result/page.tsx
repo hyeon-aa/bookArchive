@@ -1,6 +1,6 @@
 "use client";
 
-import RecommendResultContent from "@/feature/airecommend/components/RecommendResultContent";
+import RecommendByEmotionResultContent from "@/feature/explore/components/RecommendResultContent";
 import { Suspense } from "react";
 
 export default function RecommendResultPage() {
@@ -12,7 +12,7 @@ export default function RecommendResultPage() {
         </div>
       }
     >
-      <RecommendResultContent />
+      <RecommendByEmotionResultContent />
     </Suspense>
   );
 }
