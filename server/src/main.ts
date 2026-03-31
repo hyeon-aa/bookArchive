@@ -1,3 +1,4 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -24,6 +25,14 @@ async function bootstrap() {
   });
 
   app.useGlobalInterceptors(new TransformInterceptor());
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // DTO에 없는 필드 자동 제거
+      forbidNonWhitelisted: true, // 허용 안 된 필드 오면 400 에러
+      transform: true, // 타입 자동 변환 (string → number 등)
+    }),
+  );
 
   // 2. 포트를 4000으로 고정합니다.
   const port = 4000;

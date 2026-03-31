@@ -1,7 +1,15 @@
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 import { BookItem } from '../types/book-item.type';
 
 export class AiRecommendRequestDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
   currentMood: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
   userTalk: string;
 }
 
