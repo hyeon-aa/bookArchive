@@ -9,7 +9,7 @@ import { ArrowLeft, BookOpen, Info, Plus, RefreshCcw } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-export default function RecommendResultContent() {
+export default function RecommendByEmotionResultContent() {
   const router = useRouter();
   const { result, payload, setResult } = useRecommendStore();
   const { mutate: recommend, isPending } = useRecommendByEmotion();
