@@ -103,5 +103,5 @@ model ChatMessage {
   role      String
   content   String
   createdAt DateTime @default(now())
-  room      ChatRoom @relation(fields: [roomId], references: [id])
+  room      ChatRoom @relation(fields: [roomId], references: [id] ,onDelete: Cascade)
 }
