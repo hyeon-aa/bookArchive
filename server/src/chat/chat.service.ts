@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
 import { AiService } from 'src/ai/ai.service';
 import { EmbeddingService } from 'src/embedding/embedding.service';
@@ -49,7 +48,7 @@ export class ChatService {
   LEFT JOIN "Bookshelf" bs
     ON bs."bookId" = b.id AND bs."userId" = ${userId}
   WHERE be."userId" = ${userId}
-  ORDER BY be.embedding <=> ${Prisma.raw(`'${vectorStr}'`)}::vector
+  ORDER BY be.embedding <=> ${vectorStr}::vector
   LIMIT 5
 `;
     return books;
