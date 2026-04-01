@@ -17,23 +17,23 @@ import { JwtAuthGuard } from './jwt-auth-guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly usersService: AuthService) {}
+  constructor(private readonly service: AuthService) {}
 
   @Post('signup')
   @UsePipes(new ValidationPipe())
   async signUp(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.signUp(createUserDto);
+    return this.service.signUp(createUserDto);
   }
 
   @Post('login')
   @UsePipes(new ValidationPipe())
   async login(@Body() loginUserDto: LoginUserDto): Promise<LoginResponseDto> {
-    return await this.usersService.login(loginUserDto);
+    return await this.service.login(loginUserDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMe(@CurrentUser('userId') userId: number): Promise<UserInfoDto> {
-    return await this.usersService.getMe(userId);
+    return await this.service.getMe(userId);
   }
 }

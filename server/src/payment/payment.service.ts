@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   CancelPaymentDto,
   ConfirmPaymentDto,
-  myPaymentsDto,
+  MyPaymentsDto,
 } from './dto/payment.dto';
 
 @Injectable()
@@ -158,7 +158,7 @@ export class PaymentService {
   }
 
   //findMany에서는 select를 쓰고 여러건이므로 []을 반환
-  async getMyPayments(userId: number): Promise<myPaymentsDto[]> {
+  async getMyPayments(userId: number): Promise<MyPaymentsDto[]> {
     const payments = await this.prisma.payment.findMany({
       where: { userId },
       select: {

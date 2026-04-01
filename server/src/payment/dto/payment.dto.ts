@@ -24,7 +24,7 @@ export class CancelPaymentDto {
   cancelReason: string;
 }
 
-export class myPaymentsDto {
+export class MyPaymentsDto {
   paymentKey: string | null;
   orderId: string;
   createdAt: Date;

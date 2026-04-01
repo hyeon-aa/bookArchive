@@ -33,7 +33,7 @@ export class AirecommendService {
   constructor(
     private readonly aiService: AiService,
     private readonly booksService: BooksService,
-    private readonly BookShelfService: BookshelfService,
+    private readonly bookshelfService: BookshelfService,
     private readonly prisma: PrismaService,
   ) {}
   async recommend(
@@ -85,7 +85,7 @@ export class AirecommendService {
   ): Promise<AITasteRecommendResponseDto> {
     try {
       // 1. 내 서재 데이터 가져오기
-      const myBooks = await this.BookShelfService.getMyBooks(userId);
+      const myBooks = await this.bookshelfService.getMyBooks(userId);
 
       if (!myBooks || myBooks.length === 0) {
         return {
@@ -96,7 +96,7 @@ export class AirecommendService {
       }
 
       // 2. 벡터 검색으로 유사한 책들 미리 가져오기 (RAG 방식)
-      const similarBooks = await this.BookShelfService.getSimilarBooks(
+      const similarBooks = await this.bookshelfService.getSimilarBooks(
         userId,
         5,
       );
