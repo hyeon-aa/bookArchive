@@ -26,3 +26,14 @@ export const useChatMessages = (roomId: number) => {
     enabled: !!roomId,
   });
 };
+
+export const useDeleteChats = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (chatIds: number[]) => chatApi.deleteChats(chatIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: chatKeys.all });
+    },
+  });
+};

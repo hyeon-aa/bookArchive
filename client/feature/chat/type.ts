@@ -43,6 +43,11 @@ export interface SendMessageRequest {
   history: { role: "user" | "assistant"; content: string }[];
 }
 
+export interface DeleteChatResponse {
+  success: boolean;
+  count: number;
+}
+
 export type ChatRoomsResponse = ChatRoom[];
 export type ChatMessagesResponse = ChatMessageRecord[];
 export type CreateRoomResponse = ChatRoom;

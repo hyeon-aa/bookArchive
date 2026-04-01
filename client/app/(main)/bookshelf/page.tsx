@@ -3,7 +3,7 @@
 import { BooksGridView } from "@/feature/bookshelf/components/views/BooksGridView";
 import { BooksListView } from "@/feature/bookshelf/components/views/BooksListView";
 import { useMyBooks } from "@/feature/bookshelf/queries";
-import { DeleteConfirmModal } from "@/shared/components/common/DeleteConfirmModal";
+import { DeleteBooksConfirmModal } from "@/shared/components/common/DeleteBooksConfirmModal";
 import { useModal } from "@/shared/hooks/useModal";
 import { LayoutGrid, List, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -27,7 +27,7 @@ export default function BookshelfPage() {
 
   const openDeleteModal = () => {
     open(() => (
-      <DeleteConfirmModal
+      <DeleteBooksConfirmModal
         selectedIds={selectedIds}
         onSuccess={() => {
           setIsEditMode(false);
