@@ -1,7 +1,7 @@
 "use client";
 
 import { chatKeys } from "@/feature/chat/keys";
-import { useChatMessages } from "@/feature/chat/queries";
+import { useChatMessages, useCreateRoom } from "@/feature/chat/queries";
 import { ChatMessage, ChatMessageRecord } from "@/feature/chat/type";
 import { useQueryClient } from "@tanstack/react-query";
 import { getCookie } from "cookies-next";
@@ -12,25 +12,34 @@ import { useEffect, useRef, useState } from "react";
 export default function ChatRoomPage() {
   const router = useRouter();
   const params = useParams();
-  const roomId = Number(params.roomId);
-  const queryClient = useQueryClient();
+  const rawRoomId = params.roomId as string;
+  const isNewRoom = rawRoomId === "new";
 
+  const [roomId, setRoomId] = useState<number | null>(
+    isNewRoom ? null : Number(rawRoomId)
+  );
+  const queryClient = useQueryClient();
+  const { mutateAsync: createRoom } = useCreateRoom();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const { data: history } = useChatMessages(roomId);
+  const { data: history } = useChatMessages(roomId ?? 0);
 
   useEffect(() => {
-    if (history) {
-      setMessages(
-        history.map((m: ChatMessageRecord) => ({
-          role: m.role,
-          content: m.content,
-        }))
-      );
-    }
+    if (!history) return;
+
+    setMessages((prevMessages) => {
+      if (history.length === 0 && prevMessages.length > 0) {
+        return prevMessages;
+      }
+
+      return history.map((m: ChatMessageRecord) => ({
+        role: m.role,
+        content: m.content,
+      }));
+    });
   }, [history]);
 
   const sendMessage = async () => {
@@ -52,6 +61,14 @@ export default function ChatRoomPage() {
     ]);
 
     try {
+      let currentRoomId = roomId;
+      if (!currentRoomId) {
+        const newRoom = await createRoom();
+        currentRoomId = newRoom.id;
+        setRoomId(currentRoomId);
+        window.history.replaceState(null, "", `/chat/${currentRoomId}`);
+      }
+
       const BASE_URL =
         process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
       const token = getCookie("accessToken");
@@ -62,7 +79,7 @@ export default function ChatRoomPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          roomId,
+          roomId: currentRoomId,
           message: userMessage,
           history: currentHistory,
         }),
@@ -89,7 +106,7 @@ export default function ChatRoomPage() {
           const chunk = JSON.parse(line);
           if (chunk.done) {
             queryClient.invalidateQueries({
-              queryKey: chatKeys.messages(roomId),
+              queryKey: chatKeys.messages(currentRoomId!),
             });
             queryClient.invalidateQueries({ queryKey: chatKeys.rooms() });
             bottomRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -205,4 +205,17 @@ export class ChatService {
       orderBy: { createdAt: 'asc' },
     });
   }
+
+  async deleteChats(userId: number, chatIds: number[]) {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.chatRoom.deleteMany({
+        where: {
+          id: { in: chatIds },
+          userId,
+        },
+      });
+
+      return { success: true, count };
+    });
+  }
 }

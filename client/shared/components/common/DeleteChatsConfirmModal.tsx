@@ -1,23 +1,23 @@
 "use client";
 
-import { useDeleteBooks } from "@/feature/bookshelf/queries";
+import { useDeleteChats } from "@/feature/chat/queries";
 import { ConfirmModal } from "@/shared/components/common/ConfirmModal";
 import { useModal } from "@/shared/hooks/useModal";
 
-interface DeleteConfirmModalProps {
+interface DeleteChatsConfirmModalProps {
   selectedIds: number[];
   onSuccess: () => void;
 }
 
-export function DeleteConfirmModal({
+export function DeleteChatsConfirmModal({
   selectedIds,
   onSuccess,
-}: DeleteConfirmModalProps) {
-  const { mutate: deleteBooks, isPending } = useDeleteBooks();
+}: DeleteChatsConfirmModalProps) {
+  const { mutate: DeleteChats, isPending } = useDeleteChats();
   const { close } = useModal();
 
   const handleConfirm = () => {
-    deleteBooks(selectedIds, {
+    DeleteChats(selectedIds, {
       onSuccess: () => {
         onSuccess();
         close();
@@ -30,9 +30,9 @@ export function DeleteConfirmModal({
       title="삭제할까요?"
       description={
         <>
-          선택하신 {selectedIds.length}권의 도서 정보와
+          선택하신 {selectedIds.length}개의 채팅정보와
           <br />
-          관련된 AI 분석 데이터가 모두 삭제됩니다.
+          채팅창에 입력한 대화가 모두 삭제됩니다.
         </>
       }
       onConfirm={handleConfirm}

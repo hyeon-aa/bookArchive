@@ -3,6 +3,7 @@ import {
   ChatMessagesResponse,
   ChatRoomsResponse,
   CreateRoomResponse,
+  DeleteChatResponse,
 } from "./type";
 
 export const chatApi = {
@@ -18,6 +19,13 @@ export const chatApi = {
 
   getChatRoomItem: async (roomId: number) => {
     const data = await api.get<ChatMessagesResponse>(`/chat/rooms/${roomId}`);
+    return data;
+  },
+
+  deleteChats: async (chatIds: number[]) => {
+    const data = await api.delete<DeleteChatResponse>("/chat/batch", {
+      chatIds,
+    });
     return data;
   },
 };
