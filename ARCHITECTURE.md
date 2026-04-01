@@ -178,6 +178,7 @@ bookArchive/
 | `GET` | `/chat/rooms` | AI 채팅 목록 |
 | `POST` | `/chat/rooms` | 새 채팅방 생성 |
 | `GET` | `/chat/rooms/:roomId` | 각 채팅방 대화 목록 |
+| `DELETE` |	`/chat/batch` |	복수 항목 삭제 |
 
 **의존 모듈**: `AiModule`, `EmbeddingModule`
 
