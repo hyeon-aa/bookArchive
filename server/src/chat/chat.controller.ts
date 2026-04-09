@@ -9,6 +9,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { JwtAuthGuard } from 'src/auth/jwt-auth-guard';
 import { CurrentUser } from 'src/common/decorators/user.decorator';
@@ -22,6 +23,7 @@ export class ChatController {
   constructor(private readonly service: ChatService) {}
 
   @Post()
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   async chat(
     @CurrentUser('userId') userId: number,
     @Body() dto: ChatMessageDto,
