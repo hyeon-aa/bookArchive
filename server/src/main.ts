@@ -20,7 +20,7 @@ async function bootstrap() {
 
   // 1. CORS 설정 추가: 프론트엔드(3000)에서 오는 요청을 허용합니다.
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: ['http://localhost:3000', 'https://book-archive-mocha.vercel.app'],
     credentials: true,
   });
 
