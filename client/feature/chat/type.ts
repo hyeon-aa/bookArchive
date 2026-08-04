@@ -40,7 +40,6 @@ export interface ChatMessageRecord {
 export interface SendMessageRequest {
   roomId: number;
   message: string;
-  history: { role: "user" | "assistant"; content: string }[];
 }
 
 export interface DeleteChatResponse {

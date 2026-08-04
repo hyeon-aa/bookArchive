@@ -19,6 +19,8 @@ interface RelatedBook {
 
 @Injectable()
 export class ChatService {
+  private readonly HISTORY_LIMIT = 12;
+
   constructor(
     private readonly aiService: AiService,
     private readonly embeddingService: EmbeddingService,
@@ -102,23 +104,43 @@ export class ChatService {
       return;
     }
 
+    // 3. 채팅방 소유자 검증 (다른 사용자의 방에 메시지를 꽂아넣지 못하게)
+    const room = await this.prisma.chatRoom.findFirst({
+      where: { id: roomId, userId },
+    });
+
+    if (!room) {
+      res.status(403).end();
+      return;
+    }
+
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('X-Accel-Buffering', 'no');
     res.flushHeaders();
 
+    // 클라이언트가 멈춤 버튼을 누르거나 연결이 끊기면 LLM 호출도 함께 취소
+    let clientDisconnected = false;
+    const controller = new AbortController();
+    res.on('close', () => {
+      clientDisconnected = true;
+      controller.abort();
+    });
+
     try {
       const relatedBooks = await this.retrieveRelatedBooks(dto.message, userId);
-
       const context = this.buildContext(relatedBooks);
-      const history = dto.history ?? [];
 
-      const messageCount = await this.prisma.chatMessage.count({
+      // 클라이언트가 보낸 값이 아니라, DB에 저장된 히스토리를 직접 조회
+      const recentMessages = await this.prisma.chatMessage.findMany({
         where: { roomId },
+        orderBy: { createdAt: 'desc' },
+        take: this.HISTORY_LIMIT,
       });
+      const history = recentMessages.reverse();
 
-      if (messageCount === 0) {
+      if (history.length === 0) {
         await this.prisma.chatRoom.update({
           where: { id: roomId },
           data: { title: dto.message.slice(0, 20) },
@@ -134,7 +156,7 @@ export class ChatService {
           role: 'system' as const,
           content: `당신은 사용자의 독서 기록을 깊이 이해하는 따뜻한 북 큐레이터입니다.
   아래의 책장 정보를 바탕으로 사용자의 질문에 친절하고 자연스럽게 답해주세요.
-  
+
   [답변 지침]
   - "내가 이 책 읽었어?" 같은 질문엔 status를 확인해서 정확하게 답하세요.
   - 사용자의 감상(comment)이나 감정(emotion)이 있으면 그걸 언급하며 공감해주세요.
@@ -144,7 +166,7 @@ export class ChatService {
   - 답변은 간결하고 따뜻하게, 한국어로 해주세요.${context}`,
         },
         ...history.map((h) => ({
-          role: h.role,
+          role: h.role as 'user' | 'assistant',
           content: h.content,
         })),
         {
@@ -153,7 +175,10 @@ export class ChatService {
         },
       ];
 
-      const stream = await this.aiService.generateStreamCompletion(messages);
+      const stream = await this.aiService.generateStreamCompletion(
+        messages,
+        controller.signal,
+      );
 
       let fullResponse = '';
 
@@ -162,20 +187,33 @@ export class ChatService {
         //chunk 구조: { choices: [{ delta: { content: "안" } }] }
         if (text) {
           fullResponse += text;
-          res.write(`data: ${JSON.stringify({ text })}\n\n`);
-          //SSE 형식: "data: {text}\n\n"
+          if (!clientDisconnected) {
+            res.write(`data: ${JSON.stringify({ text })}\n\n`);
+            //SSE 형식: "data: {text}\n\n"
+          }
         }
       }
 
-      await this.prisma.chatMessage.create({
-        data: { roomId, role: 'assistant', content: fullResponse },
-      });
+      if (fullResponse) {
+        await this.prisma.chatMessage.create({
+          data: { roomId, role: 'assistant', content: fullResponse },
+        });
+      }
 
-      res.write(`data: ${JSON.stringify({ done: true, relatedBooks })}\n\n`);
+      if (!clientDisconnected) {
+        res.write(`data: ${JSON.stringify({ done: true, relatedBooks })}\n\n`);
+      }
     } catch (error) {
       console.log('[Stream Error]', error);
+      if (!clientDisconnected) {
+        res.write(
+          `data: ${JSON.stringify({ error: '답변을 생성하지 못했어요. 다시 시도해 주세요.' })}\n\n`,
+        );
+      }
     } finally {
-      res.end();
+      if (!res.writableEnded) {
+        res.end();
+      }
     }
   }
 
