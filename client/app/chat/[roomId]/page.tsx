@@ -1,14 +1,21 @@
 "use client";
 
 import { useStreamChat } from "@/shared/hooks/useStreamChat";
-import { ChevronLeft, SendHorizontal } from "lucide-react";
+import { ChevronLeft, SendHorizontal, Square } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function ChatRoomPage() {
   const router = useRouter();
 
-  const { messages, input, setInput, isStreaming, sendMessage, bottomRef } =
-    useStreamChat();
+  const {
+    messages,
+    input,
+    setInput,
+    isStreaming,
+    sendMessage,
+    stopStreaming,
+    bottomRef,
+  } = useStreamChat();
 
   return (
     <div className="flex flex-col h-screen bg-[#F8F9F7]">
@@ -97,15 +104,26 @@ export default function ChatRoomPage() {
             disabled:bg-[#F8F9F7] disabled:cursor-not-allowed"
           style={{ minHeight: "42px" }}
         />
-        <button
-          onClick={sendMessage}
-          disabled={!input.trim() || isStreaming}
-          className="w-10 h-10 flex-shrink-0 rounded-full bg-[#7C9885] flex items-center
-            justify-center text-white transition-all active:scale-95
-            disabled:bg-[#D4DDD7] disabled:cursor-not-allowed"
-        >
-          <SendHorizontal size={18} />
-        </button>
+        {isStreaming ? (
+          <button
+            onClick={stopStreaming}
+            className="w-10 h-10 flex-shrink-0 rounded-full bg-[#3F3F3F] flex items-center
+              justify-center text-white transition-all active:scale-95"
+            aria-label="응답 중단"
+          >
+            <Square size={14} fill="currentColor" />
+          </button>
+        ) : (
+          <button
+            onClick={sendMessage}
+            disabled={!input.trim()}
+            className="w-10 h-10 flex-shrink-0 rounded-full bg-[#7C9885] flex items-center
+              justify-center text-white transition-all active:scale-95
+              disabled:bg-[#D4DDD7] disabled:cursor-not-allowed"
+          >
+            <SendHorizontal size={18} />
+          </button>
+        )}
       </div>
     </div>
   );

@@ -297,14 +297,18 @@ export class AiService {
 
   async generateStreamCompletion(
     messages: Groq.Chat.ChatCompletionMessageParam[],
+    signal?: AbortSignal,
   ) {
-    return await this.groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      messages,
-      stream: true,
-      temperature: 0.7,
-      max_tokens: 1024,
-    });
+    return await this.groq.chat.completions.create(
+      {
+        model: 'llama-3.3-70b-versatile',
+        messages,
+        stream: true,
+        temperature: 0.7,
+        max_tokens: 1024,
+      },
+      { signal },
+    );
   }
 
   async generateAIBookReport(
