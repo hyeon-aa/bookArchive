@@ -46,7 +46,13 @@ export class RecommendationIntentService {
         RECOMMEND_INTENT_EXAMPLES.map((example) =>
           this.embeddingService.createEmbedding(example),
         ),
-      );
+      ).catch((error: unknown) => {
+        // 실패한 프로미스를 그대로 캐싱해두면, 할당량이 나중에 풀려도
+        // 재시도 없이 계속 같은 실패만 반환하게 됨(서버 재시작 전까지
+        // 영구 고장). 실패 시 캐시를 비워서 다음 호출이 다시 시도하게 함.
+        this.anchorVectorsPromise = null;
+        throw error;
+      });
     }
     return this.anchorVectorsPromise;
   }
