@@ -167,10 +167,7 @@ export class ChatService {
         data: { roomId, role: 'user', content: dto.message },
       });
 
-      const messages = [
-        {
-          role: 'system' as const,
-          content: `당신은 사용자의 독서 기록을 깊이 이해하는 따뜻한 북 큐레이터입니다.
+      const systemInstruction = `당신은 사용자의 독서 기록을 깊이 이해하는 따뜻한 북 큐레이터입니다.
   아래의 책장 정보를 바탕으로 사용자의 질문에 친절하고 자연스럽게 답해주세요.
 
   [답변 지침]
@@ -179,8 +176,9 @@ export class ChatService {
   - 독서 기간이 있으면 자연스럽게 녹여서 답해주세요.
   - 책 추천은 AI 태그와 감정 데이터를 참고해서 취향에 맞게 해주세요.
   - 책장에 없는 책에 대한 질문엔 솔직하게 "책장에 없어요"라고 말해주세요.
-  - 답변은 간결하고 따뜻하게, 한국어로 해주세요.${context}`,
-        },
+  - 답변은 간결하고 따뜻하게, 한국어로 해주세요.${context}`;
+
+      const messages = [
         ...history.map((h) => ({
           role: h.role as 'user' | 'assistant',
           content: h.content,
@@ -193,14 +191,14 @@ export class ChatService {
 
       const stream = await this.aiService.generateStreamCompletion(
         messages,
+        systemInstruction,
         controller.signal,
       );
 
       let fullResponse = '';
 
       for await (const chunk of stream) {
-        const text = chunk.choices[0].delta?.content;
-        //chunk 구조: { choices: [{ delta: { content: "안" } }] }
+        const text = chunk.text();
         if (text) {
           fullResponse += text;
           if (!clientDisconnected) {

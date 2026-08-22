@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import Groq from 'groq-sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
   AiReportRequestDto,
   DailyQuoteResponseDto,
@@ -13,22 +13,27 @@ import {
   AITasteRecommendResponseDto,
 } from './dto/ai-response.dto';
 
+// 무료 티어 대상 모델. Pro는 2026-04부터 무료 티어에서 제외됨.
+const MODEL = 'gemini-2.5-flash';
+
+export interface ChatTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 @Injectable()
 export class AiService {
-  private readonly groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY,
-  });
+  private readonly genAI = new GoogleGenerativeAI(
+    process.env.GEMINI_API_KEY ?? '',
+  );
 
   async generateCommentAndTags(
     input: AITagRequestDto,
   ): Promise<AITagResponseDto> {
     try {
-      const chatCompletion = await this.groq.chat.completions.create({
-        model: 'qwen/qwen3.6-27b',
-        messages: [
-          {
-            role: 'system',
-            content: `당신은 사용자의 독서 기록을 깊이 있게 되새겨주는 섬세한 독서 코치입니다.
+      const model = this.genAI.getGenerativeModel({
+        model: MODEL,
+        systemInstruction: `당신은 사용자의 독서 기록을 깊이 있게 되새겨주는 섬세한 독서 코치입니다.
             사용자의 한 줄 평을 확장하여, 그 감정의 이유를 짚어주고
             책이 독자의 삶에 어떤 의미로 남을지 따뜻하게 정리해주세요.
 
@@ -37,23 +42,20 @@ export class AiService {
               "comment": "사용자의 감정을 구체적으로 짚어주고, 책의 의미를 확장해주는 2~3문장",
               "tags": ["감정 기반 태그", "책의 주제 태그", "성찰 키워드"]
             }`,
-          },
-          {
-            role: 'user',
-            content: `[책 제목]: ${input.bookTitle}
-            [사용자의 한 줄 평]: ${input.review}
-            [사용자의 감정]: ${input.emotion}`,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.7,
-        reasoning_effort: 'none',
+        generationConfig: {
+          temperature: 0.7,
+          responseMimeType: 'application/json',
+        },
       });
 
-      const rawContent = chatCompletion.choices[0]?.message?.content;
+      const result = await model.generateContent(`[책 제목]: ${input.bookTitle}
+            [사용자의 한 줄 평]: ${input.review}
+            [사용자의 감정]: ${input.emotion}`);
+
+      const rawContent = result.response.text();
 
       if (!rawContent) {
-        throw new Error('No content returned from Groq');
+        throw new Error('No content returned from Gemini');
       }
 
       const parsed: unknown = JSON.parse(rawContent);
@@ -75,7 +77,7 @@ export class AiService {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
-      console.error('[Groq Error]', errorMessage);
+      console.error('[Gemini Error]', errorMessage);
 
       return {
         aiComment:
@@ -90,24 +92,21 @@ export class AiService {
     userTalk: string,
   ): Promise<AIRecommendDraft> {
     try {
-      const completion = await this.groq.chat.completions.create({
-        model: 'qwen/qwen3.6-27b',
-        messages: [
-          {
-            role: 'system',
-            content: `
+      const model = this.genAI.getGenerativeModel({
+        model: MODEL,
+        systemInstruction: `
   당신은 사용자의 기분과 고민을 분석해 완벽한 도서를 처방하는 '심리상담 북 큐레이터'입니다.
-  
+
   [분석 규칙]
-  1. 카테고리가 '휴식/안정' 또는 '불안/슬픔'일 때: 
-     - 절대 '성공법', '성장', '인간관계 기술', '자기계발'을 추천하지 마세요. 
+  1. 카테고리가 '휴식/안정' 또는 '불안/슬픔'일 때:
+     - 절대 '성공법', '성장', '인간관계 기술', '자기계발'을 추천하지 마세요.
      - 대신 따뜻한 문체의 에세이, 위로가 되는 소설, 혹은 "아무것도 안 해도 된다"는 메시지의 책을 추천하세요.
-  2. 카테고리가 '변화/동기'일 때: 
+  2. 카테고리가 '변화/동기'일 때:
      - 새로운 관점을 주는 인문학이나, 열정을 깨우는 자기계발서도 허용됩니다.
-  3. 카테고리가 '감성/추억'일 때: 
+  3. 카테고리가 '감성/추억'일 때:
      - 서정적인 소설이나 시집, 클래식한 문학을 추천하세요.
   반드시 아래 JSON 형식으로만 응답하세요.
-  
+
   {
     reason: 사용자의 고민에 깊이 공감하고(1문장), 왜 이 책들이 지금 이 상황에 휴식이 되거나 도움이 되는지(1문장) 다정하게 설명하세요.
     "books": [
@@ -115,27 +114,24 @@ export class AiService {
     ]
   }
             `,
-          },
-          {
-            role: 'user',
-            content: `
-              [현재 무드]: ${currentMood} 
-              [사용자의 고민/상황]: ${userTalk} 
-          
+        generationConfig: {
+          temperature: 0.7,
+          responseMimeType: 'application/json',
+        },
+      });
+
+      const result = await model.generateContent(`
+              [현재 무드]: ${currentMood}
+              [사용자의 고민/상황]: ${userTalk}
+
               위의 무드와 상황을 겪고 있는 사용자에게 가장 필요한 책을 3권 추천해줘.
               - 현재 무드가 '지친' 상태이고 고민이 '인간관계'라면, 위로가 되거나 관계의 기술을 알려주는 책 위주로.
               - 단순히 제목 매칭이 아니라, 사용자의 마음을 어루만져 줄 수 있는 '독서 처방' 관점에서 골라줘.
-            `,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.7,
-        reasoning_effort: 'none',
-      });
+            `);
 
-      const raw = completion.choices[0]?.message?.content;
+      const raw = result.response.text();
       if (!raw) {
-        throw new Error('No content returned from Groq');
+        throw new Error('No content returned from Gemini');
       }
 
       const parsed: unknown = JSON.parse(raw);
@@ -189,17 +185,18 @@ export class AiService {
               ? '가을'
               : '겨울';
 
-      const completion = await this.groq.chat.completions.create({
-        model: 'qwen/qwen3.6-27b',
-        messages: [
-          {
-            role: 'system',
-            content:
-              '당신은 독서 큐레이터 AI입니다. 반드시 JSON 형식으로만 응답하세요.',
-          },
-          {
-            role: 'user',
-            content: `오늘은 ${dateString}, ${season}의 시간입니다. 이 시간과 계절에 어울리는 책 속 명문장을 추천해주세요.
+      const model = this.genAI.getGenerativeModel({
+        model: MODEL,
+        systemInstruction:
+          '당신은 독서 큐레이터 AI입니다. 반드시 JSON 형식으로만 응답하세요.',
+        generationConfig: {
+          temperature: 0.8,
+          responseMimeType: 'application/json',
+        },
+      });
+
+      const result = await model.generateContent(
+        `오늘은 ${dateString}, ${season}의 시간입니다. 이 시간과 계절에 어울리는 책 속 명문장을 추천해주세요.
           응답 형식:
           {
             "quote": "문장",
@@ -208,14 +205,9 @@ export class AiService {
             "context": "맥락",
             "reason": "추천이유"
           }`,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.8,
-        reasoning_effort: 'none',
-      });
+      );
 
-      const raw = completion.choices[0]?.message?.content;
+      const raw = result.response.text();
       if (!raw) throw new Error('No content returned');
 
       const parsed: unknown = JSON.parse(raw);
@@ -248,15 +240,12 @@ export class AiService {
     similarBooks: SimilarBookResult[],
   ): Promise<AITasteRecommendResponseDto> {
     try {
-      const completion = await this.groq.chat.completions.create({
-        model: 'qwen/qwen3.6-27b',
-        messages: [
-          {
-            role: 'system',
-            content: `당신은 최신 도서 트렌드를 꿰뚫고 있는 전문 북 큐레이터입니다. 반드시 아래의 JSON 구조를 엄격히 지켜 응답하세요.
+      const model = this.genAI.getGenerativeModel({
+        model: MODEL,
+        systemInstruction: `당신은 최신 도서 트렌드를 꿰뚫고 있는 전문 북 큐레이터입니다. 반드시 아래의 JSON 구조를 엄격히 지켜 응답하세요.
             응답에는 오직 JSON만 포함하며, 다른 설명이나 텍스트는 금지합니다.
             베스트셀러 책 하나는 꼭 포함시켜주세요.
-            
+
             {
               "tasteSummary": "문자열 (사용자의 취향 분석 요약)",
               "familiarBooks": [
@@ -266,26 +255,23 @@ export class AiService {
                 { "title": "문자열", "reason": "문자열" }
               ]
             }`,
-          },
-          {
-            role: 'user',
-            content: `
+        generationConfig: {
+          temperature: 0.7,
+          responseMimeType: 'application/json',
+        },
+      });
+
+      const result = await model.generateContent(`
               [사용자의 책장]: ${JSON.stringify(books)}
               [추천 후보 도서]: ${JSON.stringify(similarBooks)}
-              
+
               분석 지시:
               1. 'familiarBooks': 사용자의 책장에 있는 책들과 장르, 주제, 문체가 매우 유사한 책 3권을 추천 후보 중에서 고르거나 새로 제안하세요.
               2. 'challengeBooks': 기존 취향과 연결고리가 있지만, 새로운 시각을 줄 수 있는 책 2권을 추천하세요.
               3. 각 추천 이유에는 "당신이 읽었던 'OOO'과 이런 점이 비슷하여 추천합니다"라는 구체적인 언급을 포함하세요.
-            `,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.7,
-        reasoning_effort: 'none',
-      });
+            `);
 
-      const raw = completion.choices[0]?.message?.content;
+      const raw = result.response.text();
       if (!raw) throw new Error('No content returned');
 
       return JSON.parse(raw) as AITasteRecommendResponseDto;
@@ -300,42 +286,49 @@ export class AiService {
   }
 
   async generateStreamCompletion(
-    messages: Groq.Chat.ChatCompletionMessageParam[],
+    messages: ChatTurn[],
+    systemInstruction: string,
     signal?: AbortSignal,
   ) {
-    return await this.groq.chat.completions.create(
-      {
-        model: 'qwen/qwen3.6-27b',
-        messages,
-        stream: true,
+    const model = this.genAI.getGenerativeModel({
+      model: MODEL,
+      systemInstruction,
+      generationConfig: {
         temperature: 0.7,
-        max_tokens: 1024,
-        reasoning_effort: 'none',
+        maxOutputTokens: 1024,
+      },
+    });
+
+    const result = await model.generateContentStream(
+      {
+        contents: messages.map((m) => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }],
+        })),
       },
       { signal },
     );
+
+    return result.stream;
   }
 
   async generateAIBookReport(
     myBooks: AiReportRequestDto,
   ): Promise<AIBookReportDto> {
     try {
-      const completion = await this.groq.chat.completions.create({
-        model: 'qwen/qwen3.6-27b',
-        messages: [
-          {
-            role: 'system',
-            content: `
+      const model = this.genAI.getGenerativeModel({
+        model: MODEL,
+        systemInstruction: `
             당신은 사용자의 한 달 독서 데이터를 분석해 '음식 캐릭터'를 부여하고 리포트를 작성하는 '심리분석 북 큐레이터'입니다.
             반드시 아래의 JSON 구조와 지침을 엄격히 따라 응답하세요.
 
             [분석 지침]
             1. reportTitle: 이달의 독서 흐름을 관통하는 감성적인 제목 (예: "지친 마음을 보듬어준 문장들의 온기")
             2. topIntent: 사용자가 선택한 '독서 의도' 중 가장 비중이 높은 것을 선정하고, 왜 이 의도가 나타났는지 심리적 통찰(insight)을 제공하세요.
-            3. intentVsEmotionAnalysis: 
+            3. intentVsEmotionAnalysis:
               - summary: 의도와 결과(감정) 사이의 연관성을 한 문장으로 요약.
               - details: 구체적인 분석 내용 3가지를 배열로 제공. (예: "읽기 전엔 '성장'을 원했지만 끝난 후엔 '평온'을 얻음")
-            4. character: 
+            4. character:
               - name: 음식 이름 (예: "달콤쌉싸름한 다크 초콜릿", "몽글몽글 순두부")
               - traits: 캐릭터의 특징 키워드 3개.
               - description: 캐릭터에 대한 짧은 묘사.
@@ -345,7 +338,7 @@ export class AiService {
               - mostFrequentEmotion: 가장 많이 선택된 감정.
               - changeSummary: 지난달 대비 혹은 이달 내에서의 심리 변화 요약.
             6. coachMessage: 다음 달의 독서를 응원하는 다정하고 따뜻한 격려 한마디.
-            
+
             {
               "reportTitle": string,
               "topIntent": {
@@ -370,28 +363,25 @@ export class AiService {
               },
               "coachMessage": string
             }
-            
+
             [작성 규칙]
             - 모든 문장은 자연스럽고 따뜻한 한국어로 작성하세요.
             - 과장하지 말고, 실제 데이터를 기반으로 해석하세요.
             - "details"는 2~3개의 문장 배열로 작성하세요.
             - "traits"는 2~3개 작성하세요.
             `,
-          },
-          {
-            role: 'user',
-            content: `
-              [현재 사용자가 저장한 책]: ${JSON.stringify(myBooks)}
-            `,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.7,
-        reasoning_effort: 'none',
+        generationConfig: {
+          temperature: 0.7,
+          responseMimeType: 'application/json',
+        },
       });
 
-      const raw = completion.choices[0]?.message?.content;
-      if (!raw) throw new Error('No content returned from Groq');
+      const result = await model.generateContent(`
+              [현재 사용자가 저장한 책]: ${JSON.stringify(myBooks)}
+            `);
+
+      const raw = result.response.text();
+      if (!raw) throw new Error('No content returned from Gemini');
 
       const parsed = JSON.parse(raw) as AIBookReportDto;
 
