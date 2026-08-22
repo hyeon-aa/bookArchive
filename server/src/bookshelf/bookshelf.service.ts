@@ -103,8 +103,9 @@ export class BookshelfService {
           await this.embeddingService.createEmbedding(textToEmbed);
 
         await this.prisma.$executeRaw`
-          INSERT INTO "BookEmbedding" ("bookId", "userId", "embedding")
-          VALUES (${book.id}, ${userId}, ${JSON.stringify(embedding)}::vector)
+          INSERT INTO "BookEmbedding" ("bookId", "embedding")
+          VALUES (${book.id}, ${JSON.stringify(embedding)}::vector)
+          ON CONFLICT ("bookId") DO NOTHING
         `;
         console.log(`${book.title} 임베딩 저장 성공`);
       } catch (error) {
@@ -294,15 +295,18 @@ export class BookshelfService {
     userId: number,
     limit: number = 5,
   ): Promise<SimilarBookResult[]> {
+    // BookEmbedding엔 더 이상 userId가 없어서(전역 콘텐츠 인덱스), 사용자가 어떤
+    // 책을 가지고 있는지는 Bookshelf를 거쳐서 알아낸 뒤 해당 책들의 임베딩을 평균낸다.
     const userAvgVector = await this.prisma.$queryRaw<{ embedding: string }[]>`
-    SELECT AVG(embedding)::text as embedding
+    SELECT AVG(be.embedding)::text as embedding
     FROM (
-      SELECT embedding
-      FROM "BookEmbedding"
+      SELECT "bookId"
+      FROM "Bookshelf"
       WHERE "userId" = ${userId}
       ORDER BY "createdAt" DESC
       LIMIT 5
-    ) t
+    ) recent
+    JOIN "BookEmbedding" be ON be."bookId" = recent."bookId"
   `;
 
     if (!userAvgVector || userAvgVector.length === 0) return [];
@@ -316,7 +320,9 @@ export class BookshelfService {
     SELECT b.title, b.author
     FROM "Book" b
     JOIN "BookEmbedding" be ON b.id = be."bookId"
-    WHERE be."userId" != ${userId}
+    WHERE be."bookId" NOT IN (
+      SELECT "bookId" FROM "Bookshelf" WHERE "userId" = ${userId}
+    )
     ORDER BY be.embedding <=> ${avgVector}::vector
     LIMIT ${limit}
   `;

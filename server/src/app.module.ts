@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AirecommendModule } from './airecommend/airecommend.module';
+import { AladinModule } from './aladin/aladin.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -27,6 +28,7 @@ import { PrismaModule } from './prisma/prisma.module';
     PaymentModule,
     MypageModule,
     ChatModule,
+    AladinModule,
   ],
   controllers: [AppController],
   providers: [AppService],

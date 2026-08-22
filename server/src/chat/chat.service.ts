@@ -37,11 +37,13 @@ export class ChatService {
     // 후보를 찾고, 책별로 더 가까운(distance가 작은) 쪽을 채택해서 상위 5권만 가져옴.
     // 예: "위로받은 책 뭐였지?" 같은 질문은 책 설명이 아니라 사용자가 남긴 감상과
     // 가까울 수 있어서, 감상 임베딩 쪽으로도 검색이 걸려야 함.
+    // BookEmbedding은 이제 전역 인덱스라 Bookshelf를 조인해서 "내 책"으로만 범위를 좁힘
+    // (채팅은 사용자 자신의 독서 기록에 답하는 기능이라, 전역 풀 전체를 뒤지면 안 됨).
     const books = await this.prisma.$queryRaw<RelatedBook[]>`
   WITH candidates AS (
-    SELECT "bookId", embedding <=> ${vectorStr}::vector AS distance
-    FROM "BookEmbedding"
-    WHERE "userId" = ${userId}
+    SELECT be."bookId", be.embedding <=> ${vectorStr}::vector AS distance
+    FROM "BookEmbedding" be
+    JOIN "Bookshelf" bs ON bs."bookId" = be."bookId" AND bs."userId" = ${userId}
     UNION ALL
     SELECT "bookId", embedding <=> ${vectorStr}::vector AS distance
     FROM "BookshelfEmbedding"

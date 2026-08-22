@@ -67,10 +67,12 @@ model Bookshelf {
   @@unique([userId, bookId])
 }
 
+// 책 콘텐츠(제목/저자/설명)의 임베딩. 누가 읽었는지와 무관하게 책 자체에
+// 귀속되는 값이라 유저 스코프를 두지 않음 — "누가 읽었는지"는 Bookshelf가 담당.
+// 알라딘 배치 시딩으로 들어오는 책도 이 테이블에 그대로 합류함(공용 후보 풀).
 model BookEmbedding {
-  id        Int    @id @default(autoincrement())
-  userId    Int
-  bookId    Int
+  id        Int      @id @default(autoincrement())
+  bookId    Int      @unique
   embedding Unsupported("vector(3072)")
   createdAt DateTime @default(now())
 }
