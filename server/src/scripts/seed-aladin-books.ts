@@ -101,15 +101,18 @@ async function run() {
       }
 
       try {
+        // update에도 category를 넣어서, 이미 있던 책이라도(다른 카테고리에서
+        // 먼저 들어왔거나 마이그레이션 이전에 시딩된 경우) 재실행 시 백필됨.
         const book = await prisma.book.upsert({
           where: { isbn },
-          update: {},
+          update: { category: category.name },
           create: {
             isbn,
             title: item.title,
             author: item.author,
             imageUrl: item.cover,
             description: item.description ?? '',
+            category: category.name,
           },
         });
 

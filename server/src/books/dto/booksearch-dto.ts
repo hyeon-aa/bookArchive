@@ -27,4 +27,5 @@ export class SearchResponseDto {
   author: string;
   imageUrl: string;
   description: string;
+  category?: string;
 }

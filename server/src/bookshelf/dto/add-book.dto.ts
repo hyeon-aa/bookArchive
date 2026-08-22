@@ -1,6 +1,7 @@
 import {
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsUrl,
   MaxLength,
@@ -27,6 +28,10 @@ export class AddBookDto {
 
   @IsString()
   description: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
 
   @IsEnum(['BEFORE', 'READING', 'DONE'])
   status: 'BEFORE' | 'READING' | 'DONE';
