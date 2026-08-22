@@ -4,10 +4,12 @@ import { AiService } from 'src/ai/ai.service';
 import { BooksService } from 'src/books/books.service';
 import { EmbeddingService } from 'src/embedding/embedding.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RecommendationLogService } from 'src/recommendation-log/recommendation-log.service';
 import { ChatMessageDto } from './dto/chat-dto';
 import { RecommendationIntentService } from './recommendation-intent.service';
 
 interface RelatedBook {
+  id?: number; // 추천 후보(isOwned: false)만 채워짐 — 전환율 로깅용
   title: string;
   author: string;
   description: string | null;
@@ -30,6 +32,7 @@ export class ChatService {
     private readonly embeddingService: EmbeddingService,
     private readonly booksService: BooksService,
     private readonly recommendationIntentService: RecommendationIntentService,
+    private readonly recommendationLogService: RecommendationLogService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -95,6 +98,7 @@ export class ChatService {
         userId,
       );
       recommendedBooks = candidates.map((c) => ({
+        id: c.id,
         title: c.title,
         author: c.author,
         description: c.description,
@@ -196,6 +200,7 @@ export class ChatService {
     try {
       const relatedBooks = await this.retrieveRelatedBooks(dto.message, userId);
       const context = this.buildContext(relatedBooks);
+      const recommendedBooks = relatedBooks.filter((b) => !b.isOwned);
 
       // 클라이언트가 보낸 값이 아니라, DB에 저장된 히스토리를 직접 조회
       const recentMessages = await this.prisma.chatMessage.findMany({
@@ -269,6 +274,23 @@ export class ChatService {
         await this.prisma.chatMessage.create({
           data: { roomId, role: 'assistant', content: fullResponse },
         });
+
+        // LLM이 실제로 답변에서 언급한 후보만 "노출된 추천"으로 기록.
+        // 후보 5권을 다 건넸다고 LLM이 전부 언급하는 건 아니라서, 응답
+        // 텍스트에 제목이 실제로 등장했는지 코드 레벨로 대조한다(LLM 판단 아님).
+        // 책 제목에 " - 부제" 형태가 흔한데, LLM이 자연스러운 문장에서 부제까지
+        // 그대로 반복하는 경우는 거의 없어서 핵심 제목만 잘라내 대조한다.
+        const coreTitle = (title: string) => title.split(/\s*[-(（]/)[0].trim();
+        const mentionedBookIds = recommendedBooks
+          .filter((book) => fullResponse.includes(coreTitle(book.title)))
+          .map((book) => book.id)
+          .filter((id): id is number => id !== undefined);
+
+        await this.recommendationLogService.logShown(
+          userId,
+          mentionedBookIds,
+          'chat',
+        );
       }
 
       if (!clientDisconnected) {

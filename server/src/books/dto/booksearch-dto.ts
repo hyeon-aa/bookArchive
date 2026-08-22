@@ -22,6 +22,7 @@ export class SearchQueryDto {
 }
 
 export class SearchResponseDto {
+  id?: number; // 알라딘 실시간 키워드 검색(search) 결과는 아직 DB에 없어 undefined
   isbn: string;
   title: string;
   author: string;

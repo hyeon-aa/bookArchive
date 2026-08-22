@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EmbeddingService } from 'src/embedding/embedding.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RecommendationLogService } from 'src/recommendation-log/recommendation-log.service';
 import { AiService } from '../ai/ai.service';
 import { BooksService } from '../books/books.service';
 import { BookshelfService } from '../bookshelf/bookshelf.service';
@@ -20,6 +21,7 @@ interface AIResponseBook {
 
 interface FinalRecommendedBook {
   book: {
+    id: number;
     isbn: string;
     title: string;
     author: string;
@@ -37,10 +39,12 @@ export class AirecommendService {
     private readonly bookshelfService: BookshelfService,
     private readonly embeddingService: EmbeddingService,
     private readonly prisma: PrismaService,
+    private readonly recommendationLogService: RecommendationLogService,
   ) {}
 
   async recommend(
     dto: AiRecommendRequestDto,
+    userId?: number,
   ): Promise<{ reason: string; books: BookItem[] }> {
     try {
       // 1. 기분/고민을 벡터화해서, 미리 시딩해둔 공용 풀에서 실존하는 후보를 직접 검색
@@ -83,6 +87,14 @@ export class AirecommendService {
           candidates.find((candidate) => candidate.title === picked.title),
         )
         .filter((book): book is BookItem => book !== undefined);
+
+      // 실제로 사용자에게 노출된 최종 추천만 기록(비로그인 요청은 userId 없이,
+      // 전환율 집계에서는 제외됨 — RecommendationLogService 참고)
+      await this.recommendationLogService.logShown(
+        userId,
+        results.map((book) => book.id),
+        'mood',
+      );
 
       return {
         reason: aiDraft.reason,
@@ -163,11 +175,20 @@ export class AirecommendService {
           .filter((item): item is FinalRecommendedBook => item !== null);
       };
 
+      const familiarBooks = resolveBooks(aiResult?.familiarBooks);
+      const challengeBooks = resolveBooks(aiResult?.challengeBooks);
+
+      await this.recommendationLogService.logShown(
+        userId,
+        [...familiarBooks, ...challengeBooks].map((item) => item.book.id),
+        'taste',
+      );
+
       return {
         tasteSummary:
           aiResult?.tasteSummary || '당신의 독서 취향을 분석한 결과입니다.',
-        familiarBooks: resolveBooks(aiResult?.familiarBooks),
-        challengeBooks: resolveBooks(aiResult?.challengeBooks),
+        familiarBooks,
+        challengeBooks,
       };
     } catch (error) {
       console.error('[Taste Recommend Error]', error);
