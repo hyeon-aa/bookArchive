@@ -5,10 +5,11 @@ import { EmbeddingModule } from 'src/embedding/embedding.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { ChatController } from './chat.controller';
 import { ChatService } from './chat.service';
+import { RecommendationIntentService } from './recommendation-intent.service';
 
 @Module({
   imports: [AiModule, EmbeddingModule, PrismaModule, BooksModule],
-  providers: [ChatService],
+  providers: [ChatService, RecommendationIntentService],
   controllers: [ChatController],
 })
 export class ChatModule {}

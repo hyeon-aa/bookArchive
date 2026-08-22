@@ -5,7 +5,7 @@ import { BooksService } from 'src/books/books.service';
 import { EmbeddingService } from 'src/embedding/embedding.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ChatMessageDto } from './dto/chat-dto';
-import { isRecommendationIntent } from './utils/recommendation-intent';
+import { RecommendationIntentService } from './recommendation-intent.service';
 
 interface RelatedBook {
   title: string;
@@ -29,6 +29,7 @@ export class ChatService {
     private readonly aiService: AiService,
     private readonly embeddingService: EmbeddingService,
     private readonly booksService: BooksService,
+    private readonly recommendationIntentService: RecommendationIntentService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -78,12 +79,15 @@ export class ChatService {
   LIMIT 5
 `;
 
-    // "추천해줘" 류의 의도는 LLM이 아니라 코드(키워드 매칭)로 판단한다 —
+    // "추천해줘" 류의 의도는 LLM이 아니라 코드(임베딩 유사도)로 판단한다 —
     // 판단 자체를 LLM에 맡기면 매번 그 판단이 맞았는지 검증할 방법이 없음.
+    // 이미 위에서 계산해둔 queryVector를 그대로 재사용(임베딩 API 추가 호출 없음).
     // 이때만 "내 책"이 아니라 전역 후보 풀(알라딘 시딩분 포함)까지 검색 범위를
     // 넓히되, 이미 가진 책은 코드 레벨에서 제외한다(SQL WHERE, LLM 판단 아님).
     let recommendedBooks: RelatedBook[] = [];
-    if (isRecommendationIntent(query)) {
+    if (
+      await this.recommendationIntentService.isRecommendationIntent(queryVector)
+    ) {
       const candidates = await this.booksService.searchByVector(
         vectorStr,
         this.RECOMMEND_CANDIDATE_LIMIT,
