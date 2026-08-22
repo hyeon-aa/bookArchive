@@ -230,6 +230,28 @@ export class BookshelfService {
           console.error('[ai Error]', error.message);
         }
       }
+
+      // 책 내용이 아니라 사용자의 감상/감정을 임베딩해서 별도로 저장.
+      // 채팅 RAG 검색에서 "위로받은 책" 같은 감상 기반 질문도 걸리게 하기 위함.
+      const finalComment = dto.comment ?? item.comment ?? '';
+      const finalEmotion = dto.emotion ?? item.emotion ?? '';
+
+      if (finalComment || finalEmotion) {
+        try {
+          const reflectionText = `감정: ${finalEmotion} 감상: ${finalComment}`;
+          const reflectionEmbedding =
+            await this.embeddingService.createEmbedding(reflectionText);
+
+          await this.prisma.$executeRaw`
+            INSERT INTO "BookshelfEmbedding" ("userId", "bookId", "embedding")
+            VALUES (${userId}, ${item.bookId}, ${JSON.stringify(reflectionEmbedding)}::vector)
+            ON CONFLICT ("userId", "bookId")
+            DO UPDATE SET embedding = EXCLUDED.embedding
+          `;
+        } catch (error: unknown) {
+          console.error('[Bookshelf Embedding Error]', error);
+        }
+      }
     }
 
     const updated = await this.prisma.bookshelf.update({

@@ -33,8 +33,25 @@ export class ChatService {
     //pgvector에 넣으려면 문자열로 변환
     const vectorStr = JSON.stringify(queryVector);
 
-    //질문 벡터랑 가장 가까운 책 5권 가져오기
+    // 책 내용(BookEmbedding)과 사용자의 감상/감정(BookshelfEmbedding) 양쪽에서
+    // 후보를 찾고, 책별로 더 가까운(distance가 작은) 쪽을 채택해서 상위 5권만 가져옴.
+    // 예: "위로받은 책 뭐였지?" 같은 질문은 책 설명이 아니라 사용자가 남긴 감상과
+    // 가까울 수 있어서, 감상 임베딩 쪽으로도 검색이 걸려야 함.
     const books = await this.prisma.$queryRaw<RelatedBook[]>`
+  WITH candidates AS (
+    SELECT "bookId", embedding <=> ${vectorStr}::vector AS distance
+    FROM "BookEmbedding"
+    WHERE "userId" = ${userId}
+    UNION ALL
+    SELECT "bookId", embedding <=> ${vectorStr}::vector AS distance
+    FROM "BookshelfEmbedding"
+    WHERE "userId" = ${userId}
+  ),
+  best AS (
+    SELECT "bookId", MIN(distance) AS distance
+    FROM candidates
+    GROUP BY "bookId"
+  )
   SELECT
     b.title,
     b.author,
@@ -45,12 +62,11 @@ export class ChatService {
     bs."startDate",
     bs."endDate",
     bs."aiTags"
-  FROM "Book" b
-  JOIN "BookEmbedding" be ON b.id = be."bookId"
+  FROM best
+  JOIN "Book" b ON b.id = best."bookId"
   LEFT JOIN "Bookshelf" bs
-    ON bs."bookId" = b.id AND bs."userId" = ${userId}
-  WHERE be."userId" = ${userId}
-  ORDER BY be.embedding <=> ${vectorStr}::vector
+    ON bs."bookId" = best."bookId" AND bs."userId" = ${userId}
+  ORDER BY best.distance
   LIMIT 5
 `;
     return books;
