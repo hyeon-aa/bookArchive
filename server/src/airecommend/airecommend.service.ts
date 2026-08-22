@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EmbeddingService } from 'src/embedding/embedding.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { BooksService } from '../books/books.service';
@@ -9,7 +10,6 @@ import {
   AITasteRecommendResponseDto,
   DailyQuoteResponseDto,
 } from './dto/ai-recommend.dto';
-import { AIRecommendDraft } from './types/ai-recommend.type';
 import { BookItem } from './types/book-item.type';
 
 interface AIResponseBook {
@@ -34,29 +34,45 @@ export class AirecommendService {
     private readonly aiService: AiService,
     private readonly booksService: BooksService,
     private readonly bookshelfService: BookshelfService,
+    private readonly embeddingService: EmbeddingService,
     private readonly prisma: PrismaService,
   ) {}
+
   async recommend(
     dto: AiRecommendRequestDto,
   ): Promise<{ reason: string; books: BookItem[] }> {
     try {
-      /** 1. AI에게 추천 이유와 책 리스트 초안 물어보기 */
-      const aiDraft: AIRecommendDraft =
-        await this.aiService.generateBookRecommendations(
-          dto.currentMood,
-          dto.userTalk,
-        );
+      // 1. 기분/고민을 벡터화해서, 미리 시딩해둔 공용 풀에서 실존하는 후보를 직접 검색
+      // (LLM에게 책을 자유 생성시키지 않음 — 후보에 없는 책은 애초에 나올 수 없음)
+      const queryVector = await this.embeddingService.createEmbedding(
+        `${dto.currentMood} ${dto.userTalk}`,
+      );
+      const candidates = await this.booksService.searchByVector(
+        JSON.stringify(queryVector),
+        8,
+      );
 
-      const results: BookItem[] = [];
-
-      for (const book of aiDraft.books) {
-        const query = `${book.title}`.trim();
-        const searchResult = await this.booksService.search(query);
-
-        if (searchResult && searchResult.length > 0) {
-          results.push(searchResult[0]);
-        }
+      if (candidates.length === 0) {
+        return {
+          reason: '아직 추천할 만한 책 데이터가 충분하지 않아요.',
+          books: [],
+        };
       }
+
+      // 2. LLM에게는 후보 중에서 고르고 이유만 설명하게 함
+      const aiDraft = await this.aiService.generateBookRecommendations(
+        dto.currentMood,
+        dto.userTalk,
+        candidates,
+      );
+
+      // 3. LLM이 고른 제목을 후보 목록과 대조해 완전한 책 정보로 복원
+      // (이미 검증된 DB 데이터라 네이버로 다시 검증할 필요가 없음)
+      const results = aiDraft.books
+        .map((picked) =>
+          candidates.find((candidate) => candidate.title === picked.title),
+        )
+        .filter((book): book is BookItem => book !== undefined);
 
       return {
         reason: aiDraft.reason,
@@ -95,10 +111,10 @@ export class AirecommendService {
         };
       }
 
-      // 2. 벡터 검색으로 유사한 책들 미리 가져오기 (RAG 방식)
+      // 2. 벡터 검색으로 유사한 책들 미리 가져오기 (공용 풀 대상 RAG 방식)
       const similarBooks = await this.bookshelfService.getSimilarBooks(
         userId,
-        5,
+        8,
       );
 
       // AI에게 전달할 형식으로 변환
@@ -108,52 +124,40 @@ export class AirecommendService {
         status: item.status || '읽기 전',
       }));
 
-      // 3. AI에게 추천 요청
+      // 3. AI에게 추천 요청 (similarBooks 후보 중에서만 고르도록 프롬프트로 제약)
       const aiResult = await this.aiService.generateTasteBasedRecommendations(
         formattedBooks,
         similarBooks,
       );
 
-      const resolveBooks = async (
+      // 후보 목록에 이미 isbn·설명·이미지가 다 있으므로, LLM이 고른 제목을
+      // 후보와 대조하기만 하면 됨 — 네이버 재검증이 필요 없음.
+      const resolveBooks = (
         books: AIResponseBook[],
-      ): Promise<FinalRecommendedBook[]> => {
+      ): FinalRecommendedBook[] => {
         if (!books || !Array.isArray(books)) return [];
 
-        const results: FinalRecommendedBook[] = [];
-
-        for (const aiBook of books) {
-          try {
-            const searchResults = await this.booksService.search(aiBook.title);
-
-            if (searchResults && searchResults.length > 0) {
-              const realBook = searchResults[0];
-
-              results.push({
-                book: {
-                  isbn: realBook.isbn,
-                  title: realBook.title,
-                  author: realBook.author,
-                  imageUrl: realBook.imageUrl,
-                  description: realBook.description,
-                },
-                reason: aiBook.reason,
-              });
-            } else {
-              console.warn(`[필터링] 실존하지 않는 도서 제외: ${aiBook.title}`);
+        return books
+          .map((aiBook) => {
+            const matched = similarBooks.find(
+              (candidate) => candidate.title === aiBook.title,
+            );
+            if (!matched) {
+              console.warn(
+                `[필터링] 후보 목록에 없는 도서 제외: ${aiBook.title}`,
+              );
+              return null;
             }
-          } catch (error) {
-            console.error(`네이버 검색 연동 중 오류: ${aiBook.title}`, error);
-          }
-        }
-
-        return results;
+            return { book: matched, reason: aiBook.reason };
+          })
+          .filter((item): item is FinalRecommendedBook => item !== null);
       };
 
       return {
         tasteSummary:
           aiResult?.tasteSummary || '당신의 독서 취향을 분석한 결과입니다.',
-        familiarBooks: await resolveBooks(aiResult?.familiarBooks),
-        challengeBooks: await resolveBooks(aiResult?.challengeBooks),
+        familiarBooks: resolveBooks(aiResult?.familiarBooks),
+        challengeBooks: resolveBooks(aiResult?.challengeBooks),
       };
     } catch (error) {
       console.error('[Taste Recommend Error]', error);

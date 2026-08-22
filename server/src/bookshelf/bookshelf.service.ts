@@ -316,8 +316,10 @@ export class BookshelfService {
     const avgVector = userAvgVector[0].embedding;
     if (!avgVector) return [];
 
+    // 제목/저자만이 아니라 isbn·설명·이미지까지 전부 반환해서, 이후 LLM이 이 후보
+    // 중에서 고른 제목을 다시 네이버로 검증할 필요 없이 바로 완전한 책 정보를 쓸 수 있게 함.
     const similarBooks = await this.prisma.$queryRaw<SimilarBookResult[]>`
-    SELECT b.title, b.author
+    SELECT b.isbn, b.title, b.author, b."imageUrl", b.description
     FROM "Book" b
     JOIN "BookEmbedding" be ON b.id = be."bookId"
     WHERE be."bookId" NOT IN (
