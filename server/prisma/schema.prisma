@@ -75,6 +75,18 @@ model BookEmbedding {
   createdAt DateTime @default(now())
 }
 
+// 책 자체의 내용(제목/저자/설명)이 아니라, 사용자가 남긴 감상·감정을 임베딩.
+// 책 내용 검색과 별도 신호로 둬서, "위로받은 책" 같은 감상 기반 질문도 벡터 검색에 걸리게 함.
+model BookshelfEmbedding {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  bookId    Int
+  embedding Unsupported("vector(3072)")
+  createdAt DateTime @default(now())
+
+  @@unique([userId, bookId])
+}
+
 model Payment {
   id            Int      @id @default(autoincrement())
   orderId       String   @unique
