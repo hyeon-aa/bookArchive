@@ -4,6 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { BooksService } from '../books/books.service';
 import { BookshelfService } from '../bookshelf/bookshelf.service';
+import { getCategoriesForMood } from './constants/mood-category-map';
 import {
   AiRecommendRequestDto,
   AiReportResponseDto,
@@ -47,10 +48,19 @@ export class AirecommendService {
       const queryVector = await this.embeddingService.createEmbedding(
         `${dto.currentMood} ${dto.userTalk}`,
       );
-      const candidates = await this.booksService.searchByVector(
-        JSON.stringify(queryVector),
+      const vectorStr = JSON.stringify(queryVector);
+
+      // 무드에 맞는 장르로 먼저 좁혀서 검색 (하이브리드: 벡터 유사도 + 장르 필터).
+      // 매핑에 없는 무드거나, 필터링했더니 후보가 없으면 장르 필터 없이 재검색.
+      const moodCategories = getCategoriesForMood(dto.currentMood);
+      let candidates = await this.booksService.searchByVector(
+        vectorStr,
         8,
+        moodCategories,
       );
+      if (candidates.length === 0 && moodCategories.length > 0) {
+        candidates = await this.booksService.searchByVector(vectorStr, 8);
+      }
 
       if (candidates.length === 0) {
         return {

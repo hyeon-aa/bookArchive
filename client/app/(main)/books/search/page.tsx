@@ -51,6 +51,7 @@ export default function BookSearchPage() {
         author: book.author,
         imageUrl: book.imageUrl,
         description: book.description,
+        category: book.category,
         status,
       },
       {

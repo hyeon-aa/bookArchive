@@ -81,6 +81,7 @@ export class BookshelfService {
           author: dto.author,
           imageUrl: dto.imageUrl,
           description: dto.description,
+          category: dto.category,
         },
       });
     }

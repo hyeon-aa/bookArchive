@@ -4,4 +4,5 @@ export interface BookSearchResponse {
   author: string;
   imageUrl: string;
   description: string;
+  category?: string;
 }

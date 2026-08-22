@@ -39,6 +39,9 @@ model Book {
   author    String
   imageUrl  String
   description String
+  // 알라딘 배치 시딩 시 어떤 장르로 가져왔는지 저장(SEED_CATEGORIES의 name).
+  // 네이버 검색으로 사용자가 직접 추가한 책은 장르 정보가 없어 null.
+  category  String?
   createdAt DateTime    @default(now())
   bookshelf Bookshelf[]
 }

@@ -14,6 +14,7 @@ export const bookshelfApi = {
     author: string;
     imageUrl: string;
     description: string;
+    category?: string;
     status: BookStatus;
   }) => {
     const data = await api.post<BookshelfItemWithLevelResponse>(
