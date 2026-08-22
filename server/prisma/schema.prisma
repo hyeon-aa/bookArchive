@@ -92,6 +92,21 @@ model BookshelfEmbedding {
   @@unique([userId, bookId])
 }
 
+// 추천 화면(무드/취향/채팅)에서 실제로 사용자에게 보여준 책을 기록.
+// "추천했더니 실제로 책장에 담겼는지"를 나중에 Bookshelf와 대조해 전환율을
+// 계산하기 위한 로그 — userId는 로그인 없이도 호출 가능한 무드 추천 때문에 nullable
+// (비로그인 요청은 이후 전환 여부를 추적할 방법이 없어 집계에서 제외됨).
+model RecommendationLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  bookId    Int
+  source    String   // 'mood' | 'taste' | 'chat'
+  createdAt DateTime @default(now())
+
+  @@index([userId, bookId])
+  @@index([source])
+}
+
 model Payment {
   id            Int      @id @default(autoincrement())
   orderId       String   @unique

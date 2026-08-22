@@ -35,7 +35,7 @@ export class BooksService {
       : Prisma.empty;
 
     return this.prisma.$queryRaw<SearchResponseDto[]>`
-      SELECT b.isbn, b.title, b.author, b."imageUrl", b.description, b.category
+      SELECT b.id, b.isbn, b.title, b.author, b."imageUrl", b.description, b.category
       FROM "Book" b
       JOIN "BookEmbedding" be ON be."bookId" = b.id
       WHERE 1=1 ${categoryFilter} ${excludeOwnedFilter}

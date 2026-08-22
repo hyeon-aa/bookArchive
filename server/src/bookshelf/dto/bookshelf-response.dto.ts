@@ -20,6 +20,7 @@ export class BookshelfWithLevelResponseDto extends BookshelfResponseDto {
 }
 
 export interface SimilarBookResult {
+  id: number;
   isbn: string;
   title: string;
   author: string;

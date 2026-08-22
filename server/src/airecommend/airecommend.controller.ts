@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from 'src/auth/jwt-auth-guard';
+import { OptionalJwtAuthGuard } from 'src/auth/optional-jwt-auth-guard';
 import { CurrentUser } from 'src/common/decorators/user.decorator';
 import { AirecommendService } from './airecommend.service';
 import {
@@ -15,8 +16,12 @@ export class AirecommendController {
   constructor(private readonly service: AirecommendService) {}
 
   @Post()
-  async recommend(@Body() dto: AiRecommendRequestDto) {
-    return this.service.recommend(dto);
+  @UseGuards(OptionalJwtAuthGuard)
+  async recommend(
+    @Body() dto: AiRecommendRequestDto,
+    @CurrentUser('userId') userId?: number,
+  ) {
+    return this.service.recommend(dto, userId);
   }
 
   @Get('daily-quote')
