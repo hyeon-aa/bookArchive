@@ -14,22 +14,31 @@ export class BooksService {
   // 임베딩 벡터로 전역 후보 풀(BookEmbedding)에서 직접 검색.
   // 키워드 검색(search)과 달리 실존이 이미 보장된 우리 DB의 책만 반환하므로,
   // 이 결과를 LLM에 후보로 넘기면 LLM이 실존하지 않는 책을 지어낼 수 없음.
-  // categories가 주어지면 하이브리드 검색(벡터 유사도 + 장르 필터)으로 좁힘.
+  // categories가 주어지면 하이브리드 검색(벡터 유사도 + 장르 필터)으로 좁히고,
+  // excludeOwnedByUserId가 주어지면 그 유저가 이미 가진 책은 후보에서 뺀다
+  // (이미 읽은 책을 "추천"하는 걸 코드 레벨에서 막기 위함).
   async searchByVector(
     vectorStr: string,
     limit: number,
     categories?: string[],
+    excludeOwnedByUserId?: number,
   ): Promise<SearchResponseDto[]> {
     const categoryFilter =
       categories && categories.length > 0
         ? Prisma.sql`AND b.category = ANY(${categories})`
         : Prisma.empty;
 
+    const excludeOwnedFilter = excludeOwnedByUserId
+      ? Prisma.sql`AND b.id NOT IN (
+          SELECT "bookId" FROM "Bookshelf" WHERE "userId" = ${excludeOwnedByUserId}
+        )`
+      : Prisma.empty;
+
     return this.prisma.$queryRaw<SearchResponseDto[]>`
       SELECT b.isbn, b.title, b.author, b."imageUrl", b.description, b.category
       FROM "Book" b
       JOIN "BookEmbedding" be ON be."bookId" = b.id
-      WHERE 1=1 ${categoryFilter}
+      WHERE 1=1 ${categoryFilter} ${excludeOwnedFilter}
       ORDER BY be.embedding <=> ${vectorStr}::vector
       LIMIT ${limit}
     `;

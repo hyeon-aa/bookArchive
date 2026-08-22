@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Response } from 'express';
 import { AiService } from 'src/ai/ai.service';
+import { BooksService } from 'src/books/books.service';
 import { EmbeddingService } from 'src/embedding/embedding.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ChatMessageDto } from './dto/chat-dto';
+import { isRecommendationIntent } from './utils/recommendation-intent';
 
 interface RelatedBook {
   title: string;
@@ -15,15 +17,18 @@ interface RelatedBook {
   startDate: Date | null;
   endDate: Date | null;
   aiTags: string[] | null;
+  isOwned: boolean;
 }
 
 @Injectable()
 export class ChatService {
   private readonly HISTORY_LIMIT = 12;
+  private readonly RECOMMEND_CANDIDATE_LIMIT = 5;
 
   constructor(
     private readonly aiService: AiService,
     private readonly embeddingService: EmbeddingService,
+    private readonly booksService: BooksService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -38,8 +43,8 @@ export class ChatService {
     // 예: "위로받은 책 뭐였지?" 같은 질문은 책 설명이 아니라 사용자가 남긴 감상과
     // 가까울 수 있어서, 감상 임베딩 쪽으로도 검색이 걸려야 함.
     // BookEmbedding은 이제 전역 인덱스라 Bookshelf를 조인해서 "내 책"으로만 범위를 좁힘
-    // (채팅은 사용자 자신의 독서 기록에 답하는 기능이라, 전역 풀 전체를 뒤지면 안 됨).
-    const books = await this.prisma.$queryRaw<RelatedBook[]>`
+    // (채팅은 기본적으로 사용자 자신의 독서 기록에 답하는 기능이라, 전역 풀 전체를 뒤지면 안 됨).
+    const myBooks = await this.prisma.$queryRaw<RelatedBook[]>`
   WITH candidates AS (
     SELECT be."bookId", be.embedding <=> ${vectorStr}::vector AS distance
     FROM "BookEmbedding" be
@@ -63,7 +68,8 @@ export class ChatService {
     bs.emotion,
     bs."startDate",
     bs."endDate",
-    bs."aiTags"
+    bs."aiTags",
+    true AS "isOwned"
   FROM best
   JOIN "Book" b ON b.id = best."bookId"
   LEFT JOIN "Bookshelf" bs
@@ -71,7 +77,34 @@ export class ChatService {
   ORDER BY best.distance
   LIMIT 5
 `;
-    return books;
+
+    // "추천해줘" 류의 의도는 LLM이 아니라 코드(키워드 매칭)로 판단한다 —
+    // 판단 자체를 LLM에 맡기면 매번 그 판단이 맞았는지 검증할 방법이 없음.
+    // 이때만 "내 책"이 아니라 전역 후보 풀(알라딘 시딩분 포함)까지 검색 범위를
+    // 넓히되, 이미 가진 책은 코드 레벨에서 제외한다(SQL WHERE, LLM 판단 아님).
+    let recommendedBooks: RelatedBook[] = [];
+    if (isRecommendationIntent(query)) {
+      const candidates = await this.booksService.searchByVector(
+        vectorStr,
+        this.RECOMMEND_CANDIDATE_LIMIT,
+        undefined,
+        userId,
+      );
+      recommendedBooks = candidates.map((c) => ({
+        title: c.title,
+        author: c.author,
+        description: c.description,
+        status: null,
+        comment: null,
+        emotion: null,
+        startDate: null,
+        endDate: null,
+        aiTags: null,
+        isOwned: false,
+      }));
+    }
+
+    return [...myBooks, ...recommendedBooks];
   }
 
   //자연어로 바꾸기
@@ -84,31 +117,41 @@ export class ChatService {
       BEFORE: '읽기 전',
     };
 
-    const bookList = books
-      .map((book) => {
-        const status = book.status
-          ? (STATUS_MAP[book.status] ?? book.status)
-          : '정보 없음';
+    const renderBook = (book: RelatedBook) => {
+      const status = book.status
+        ? (STATUS_MAP[book.status] ?? book.status)
+        : '정보 없음';
 
-        const lines = [
-          `- 제목: ${book.title} | 저자: ${book.author}`,
-          `  독서 상태: ${status}`,
-          book.comment ? `  사용자 감상: ${book.comment}` : '',
-          book.emotion ? `  사용자 감정: ${book.emotion}` : '',
-          book.aiTags?.length ? `  AI 태그: ${book.aiTags.join(', ')}` : '',
-          // ↓ 추가
-          book.startDate
-            ? `  독서 시작일: ${new Date(book.startDate).toLocaleDateString('ko-KR')}`
-            : '',
-          book.endDate
-            ? `  독서 완료일: ${new Date(book.endDate).toLocaleDateString('ko-KR')}`
-            : '',
-        ];
-        return lines.filter(Boolean).join('\n');
-      })
-      .join('\n\n');
+      const lines = [
+        `- 제목: ${book.title} | 저자: ${book.author}`,
+        book.isOwned ? `  독서 상태: ${status}` : '',
+        book.comment ? `  사용자 감상: ${book.comment}` : '',
+        book.emotion ? `  사용자 감정: ${book.emotion}` : '',
+        book.aiTags?.length ? `  AI 태그: ${book.aiTags.join(', ')}` : '',
+        book.startDate
+          ? `  독서 시작일: ${new Date(book.startDate).toLocaleDateString('ko-KR')}`
+          : '',
+        book.endDate
+          ? `  독서 완료일: ${new Date(book.endDate).toLocaleDateString('ko-KR')}`
+          : '',
+        !book.isOwned && book.description
+          ? `  설명: ${book.description.slice(0, 200)}`
+          : '',
+      ];
+      return lines.filter(Boolean).join('\n');
+    };
 
-    return `\n\n[사용자의 책장 정보]\n${bookList}`;
+    const myBooks = books.filter((b) => b.isOwned);
+    const recommendedBooks = books.filter((b) => !b.isOwned);
+
+    let context = '';
+    if (myBooks.length > 0) {
+      context += `\n\n[사용자의 책장 정보]\n${myBooks.map(renderBook).join('\n\n')}`;
+    }
+    if (recommendedBooks.length > 0) {
+      context += `\n\n[추천 후보 도서 — 사용자가 아직 읽지 않은 책, 실존이 검증된 책만 포함됨]\n${recommendedBooks.map(renderBook).join('\n\n')}`;
+    }
+    return context;
   }
 
   // SSE 헤더 설정
@@ -173,11 +216,13 @@ export class ChatService {
   아래의 책장 정보를 바탕으로 사용자의 질문에 친절하고 자연스럽게 답해주세요.
 
   [답변 지침]
-  - "내가 이 책 읽었어?" 같은 질문엔 status를 확인해서 정확하게 답하세요.
+  - "내가 이 책 읽었어?" 같은 질문엔 [사용자의 책장 정보]의 status를 확인해서 정확하게 답하세요.
   - 사용자의 감상(comment)이나 감정(emotion)이 있으면 그걸 언급하며 공감해주세요.
   - 독서 기간이 있으면 자연스럽게 녹여서 답해주세요.
-  - 책 추천은 AI 태그와 감정 데이터를 참고해서 취향에 맞게 해주세요.
-  - 책장에 없는 책에 대한 질문엔 솔직하게 "책장에 없어요"라고 말해주세요.
+  - [사용자의 책장 정보]에 없는 책에 대한 질문엔 솔직하게 "책장에 없어요"라고 말해주세요.
+  - [추천 후보 도서]가 함께 주어졌다면, 사용자가 비슷한 책을 추천해달라고 한 것입니다.
+    반드시 그 목록에 있는 책 중에서만 추천하세요 — 목록에 없는 책을 지어내면 안 됩니다.
+    이 책들은 사용자가 아직 읽지 않은 책이므로 "읽으셨죠" 같은 표현은 쓰지 마세요.
   - 답변은 간결하고 따뜻하게, 한국어로 해주세요.${context}`;
 
       const messages = [

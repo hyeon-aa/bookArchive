@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { AiModule } from 'src/ai/ai.module';
+import { BooksModule } from 'src/books/books.module';
 import { EmbeddingModule } from 'src/embedding/embedding.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { ChatController } from './chat.controller';
 import { ChatService } from './chat.service';
 
 @Module({
-  imports: [AiModule, EmbeddingModule, PrismaModule],
+  imports: [AiModule, EmbeddingModule, PrismaModule, BooksModule],
   providers: [ChatService],
   controllers: [ChatController],
 })

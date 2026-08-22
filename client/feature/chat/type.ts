@@ -13,6 +13,9 @@ export interface RelatedBook {
   startDate: string | null;
   endDate: string | null;
   aiTags: string[] | null;
+  // true면 사용자가 실제로 가진 책, false면 "추천해줘" 의도일 때 전역
+  // 후보 풀에서 뽑힌 아직 안 읽은 책.
+  isOwned: boolean;
 }
 
 export interface ChatStreamChunk {
