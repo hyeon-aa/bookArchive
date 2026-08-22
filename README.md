@@ -12,7 +12,7 @@
     <img src="https://img.shields.io/badge/NestJS-E0234E?style=flat-square&logo=nestjs&logoColor=white" alt="NestJS" />
     <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
     <img src="https://img.shields.io/badge/Prisma-2D3748?style=flat-square&logo=prisma&logoColor=white" alt="Prisma" />
-    <img src="https://img.shields.io/badge/Groq_Llama3-F55036?style=flat-square&logo=lightning&logoColor=white" alt="Groq" />
+    <img src="https://img.shields.io/badge/Google_Gemini-8E75B2?style=flat-square&logo=googlegemini&logoColor=white" alt="Gemini" />
     <img src="https://img.shields.io/badge/Toss_Payments-0064FF?style=flat-square&logo=toss&logoColor=white" alt="Toss" />
   </p>
   
@@ -48,7 +48,7 @@
 ### 4. 📚 내 책장 관리
 - **책 검색 및 저장**: 네이버 책 API를 통해 책을 검색하고 내 책장에 저장할 수 있습니다. 
 - **3단계 Funnel UX**: 상태 및 독서 목적 선택 → 감상/감정 → 문장 기록으로 이어지는 체계적인 기록 경험을 제공합니다.
-- **취향 기반 큐레이션**: 유사도 검색을 통해 '내 취향과 비슷한 책'과 '도전해볼 만한 책'을 AI가 추천합니다.
+- **취향/무드 기반 큐레이션**: 벡터 검색으로 실존하는 후보를 먼저 찾고, AI는 그 후보 중에서만 고르고 이유를 설명하는 구조라 존재하지 않는 책을 추천하는 문제가 없습니다. 후보 풀은 알라딘 베스트셀러 데이터로 미리 채워둡니다.
 
 ### 5. 💳 결제 및 멤버십
 - **Toss Payments**: 결제 위젯 연동을 통해 멤버십 가입 기능을 제공합니다.
