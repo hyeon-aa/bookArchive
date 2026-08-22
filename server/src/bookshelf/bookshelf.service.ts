@@ -103,8 +103,9 @@ export class BookshelfService {
           await this.embeddingService.createEmbedding(textToEmbed);
 
         await this.prisma.$executeRaw`
-          INSERT INTO "BookEmbedding" ("bookId", "userId", "embedding")
-          VALUES (${book.id}, ${userId}, ${JSON.stringify(embedding)}::vector)
+          INSERT INTO "BookEmbedding" ("bookId", "embedding")
+          VALUES (${book.id}, ${JSON.stringify(embedding)}::vector)
+          ON CONFLICT ("bookId") DO NOTHING
         `;
         console.log(`${book.title} 임베딩 저장 성공`);
       } catch (error) {
@@ -294,15 +295,18 @@ export class BookshelfService {
     userId: number,
     limit: number = 5,
   ): Promise<SimilarBookResult[]> {
+    // BookEmbedding엔 더 이상 userId가 없어서(전역 콘텐츠 인덱스), 사용자가 어떤
+    // 책을 가지고 있는지는 Bookshelf를 거쳐서 알아낸 뒤 해당 책들의 임베딩을 평균낸다.
     const userAvgVector = await this.prisma.$queryRaw<{ embedding: string }[]>`
-    SELECT AVG(embedding)::text as embedding
+    SELECT AVG(be.embedding)::text as embedding
     FROM (
-      SELECT embedding
-      FROM "BookEmbedding"
+      SELECT "bookId"
+      FROM "Bookshelf"
       WHERE "userId" = ${userId}
       ORDER BY "createdAt" DESC
       LIMIT 5
-    ) t
+    ) recent
+    JOIN "BookEmbedding" be ON be."bookId" = recent."bookId"
   `;
 
     if (!userAvgVector || userAvgVector.length === 0) return [];
@@ -312,11 +316,15 @@ export class BookshelfService {
     const avgVector = userAvgVector[0].embedding;
     if (!avgVector) return [];
 
+    // 제목/저자만이 아니라 isbn·설명·이미지까지 전부 반환해서, 이후 LLM이 이 후보
+    // 중에서 고른 제목을 다시 네이버로 검증할 필요 없이 바로 완전한 책 정보를 쓸 수 있게 함.
     const similarBooks = await this.prisma.$queryRaw<SimilarBookResult[]>`
-    SELECT b.title, b.author
+    SELECT b.isbn, b.title, b.author, b."imageUrl", b.description
     FROM "Book" b
     JOIN "BookEmbedding" be ON b.id = be."bookId"
-    WHERE be."userId" != ${userId}
+    WHERE be."bookId" NOT IN (
+      SELECT "bookId" FROM "Bookshelf" WHERE "userId" = ${userId}
+    )
     ORDER BY be.embedding <=> ${avgVector}::vector
     LIMIT ${limit}
   `;

@@ -15,9 +15,9 @@
 | **프론트엔드** | Next.js 14 (App Router), TypeScript, Tailwind CSS, React Query, Zustand |
 | **백엔드** | NestJS, TypeScript, Prisma |
 | **데이터베이스** | PostgreSQL + pgvector |
-| **AI** | Groq (`llama-3.3-70b-versatile`), Google Gemini (`embedding-001`) |
+| **AI** | Google Gemini — 생성(`gemini-2.5-flash`) + 임베딩(`gemini-embedding-001`), 전부 무료 티어 |
 | **결제** | Toss Payments |
-| **외부 API** | Naver Books API |
+| **외부 API** | Naver Books API(실시간 검색), 알라딘 Open API(추천 후보 풀 배치 시딩) |
 | **인프라** | Docker (PostgreSQL 컨테이너) |
 
 ---
@@ -54,13 +54,35 @@ bookArchive/
 
 ---
 
-### 📖 books — 네이버 도서 검색
+### 📖 books — 도서 검색 + 전역 벡터 검색
 
 | Method | Endpoint | 설명 |
 |--------|----------|------|
-| `GET` | `/books/search?query=` | 도서 검색 |
+| `GET` | `/books/search?query=` | 사용자 실시간 검색 (네이버) |
+
+| 함수 | 설명 |
+|------|------|
+| `search(query)` | 네이버 API로 키워드 검색 (엔드포인트로 노출) |
+| `searchByVector(vectorStr, limit)` | `BookEmbedding` 전역 풀에서 벡터 유사도 검색 — 추천 로직 전용, 엔드포인트 없음 |
 
 **외부 의존**: Naver Books API
+
+---
+
+### 🏛️ aladin — 추천 후보 풀 배치 시딩 전용
+
+> 직접 노출되는 API 엔드포인트 없음. 사용자 요청 경로엔 안 쓰임
+
+네이버 도서 API엔 목록/베스트셀러 조회가 없어서(검색만 가능), 추천
+후보 풀을 미리 채우는 배치 전용으로 알라딘 Open API(`ItemList`)를 사용.
+
+| 함수 | 설명 |
+|------|------|
+| `fetchBestsellers(categoryId, maxResults, start)` | 카테고리별 베스트셀러 조회. 호출당 최대 50건이라 `start`로 페이지네이션 |
+
+**실행**: `server` 디렉터리에서 `npm run seed:aladin`. 카테고리 목록은
+`src/scripts/seed-aladin-books.ts`에 누적 관리(31개, 실제 API 호출로
+검증된 ID만 사용). 이미 임베딩된 책은 건너뛰므로 재실행해도 안전.
 
 ---
 
@@ -75,33 +97,37 @@ bookArchive/
 | `DELETE` | `/bookshelf/batch` | 복수 항목 삭제 |
 
 **의존 모듈**: `AiModule`, `EmbeddingModule`  
-**외부 의존**: Groq API, Gemini API
+**외부 의존**: Gemini API
 
 <details>
 <summary>주요 동작 설명</summary>
 
-- `POST /bookshelf` 호출 시 책이 DB에 없으면 생성하고, `BookEmbedding` 테이블에 벡터를 자동 저장
-- `PATCH /bookshelf/:id` 에서 감상(`comment`) 또는 감정(`emotion`)이 있으면 Groq LLM이 AI 코멘트와 태그 3개를 자동 생성
+- `POST /bookshelf` 호출 시 책이 DB에 없으면 생성하고, `BookEmbedding`(전역 콘텐츠 인덱스, 책마다 1개)에 벡터를 자동 저장. 임베딩 텍스트는 `description`만 사용(제목/저자는 이미 `Book` 테이블에 구조화된 컬럼으로 있어서 임베딩엔 안 섞음, description이 없는 책만 제목+저자로 폴백)
+- `PATCH /bookshelf/:id` 에서 감상(`comment`) 또는 감정(`emotion`)이 있으면 Gemini가 AI 코멘트와 태그 3개를 자동 생성하고, 동시에 그 감상·감정 자체를 별도로 임베딩해 `BookshelfEmbedding`(유저 스코프)에 저장 — "위로받은 책이 뭐였지" 같은 감상 기반 질문이 채팅 RAG에서 검색되게 하기 위함
 - 독서 완료(`status: DONE`) 시 누적 권수에 따라 레벨업 (10 / 30 / 50 / 100권 기준)
-- `getSimilarBooks()` — pgvector `<=>` 연산자로 코사인 유사도 기반 유사 도서 추천
+- `getSimilarBooks()` — 최근 추가한 내 책들의 임베딩 평균 벡터로, 내가 아직 안 가진 책 중 가장 가까운 후보를 전역 `BookEmbedding` 풀(알라딘 배치 시딩분 포함)에서 검색. `isbn`·이미지·설명까지 전부 반환해서 이후 네이버 재검증 없이 바로 씀
 
 </details>
 
 ---
 
-### 🤖 ai — Groq LLM 공통 서비스
+### 🤖 ai — Gemini LLM 공통 서비스
 
-> 직접 노출되는 API 엔드포인트 없음. `BookshelfModule`, `AirecommendModule`에서 공유
+> 직접 노출되는 API 엔드포인트 없음. `BookshelfModule`, `AirecommendModule`, `ChatModule`에서 공유
 
 | 함수 | 설명 |
 |------|------|
 | `generateCommentAndTags()` | 감상 AI 코멘트 · 태그 3개 생성 |
-| `generateBookRecommendations()` | 현재 무드·고민 기반 도서 3권 처방 |
+| `generateBookRecommendations(mood, talk, candidates)` | 무드·고민 기반 도서 추천 — **candidates(벡터 검색으로 미리 찾은 실존 후보) 중에서만 고르도록 제약**, LLM이 책을 지어낼 수 없음 |
 | `generateDailyQuote()` | 오늘 날짜·계절에 맞는 책 속 명문장 |
-| `generateTasteBasedRecommendations()` | 책장 데이터 + 벡터 추천 합쳐 취향 분석 |
+| `generateTasteBasedRecommendations()` | 책장 데이터 + 벡터 추천 후보 중에서만 골라 취향 분석 (동일하게 후보 제약) |
+| `generateStreamCompletion(messages, systemInstruction, signal)` | 채팅 스트리밍 응답 생성, `AbortSignal`로 중단 가능 |
 | `generateAIBookReport()` | 월간 독서 리포트 + 음식 캐릭터 부여 |
 
-**모델**: `llama-3.3-70b-versatile` (Groq) · `response_format: json_object` · `temperature: 0.7`
+**모델**: `gemini-2.5-flash` (Google Gemini, 무료 티어) · `responseMimeType: application/json` · `temperature: 0.7`
+
+> ⚠️ `gemini-2.5-pro`는 2026-04부터 무료 티어 제외, `gemini-2.5-flash-lite`는 2026-10-16 은퇴 예정 — 둘 다 사용 금지.
+> SDK는 `@google/generative-ai`(CJS) 사용. 최신 `@google/genai`는 ESM 전용이라 이 프로젝트의 CommonJS 빌드와 충돌해서 못 씀.
 
 ---
 
@@ -113,7 +139,7 @@ bookArchive/
 |------|------|
 | `createEmbedding(text)` | 텍스트를 `number[]` 벡터로 변환 |
 
-**모델**: `gemini-embedding-001` (Google Gemini)
+**모델**: `gemini-embedding-001` (Google Gemini) · 무료 티어 하루 1000건 제한 (배치 시딩 시 주의)
 
 ---
 
@@ -128,12 +154,31 @@ bookArchive/
 
 **의존 모듈**: `BooksModule`, `BookshelfModule`, `AiModule`, `EmbeddingModule`
 
-<details>
-<summary>취향 추천 동작 흐름</summary>
+> 무드·취향 추천은 둘 다 **"검색 후 생성"** 구조. 예전엔 LLM이 책 제목을
+> 자유 생성한 뒤 네이버로 사후 검증해서 없으면 버리는 방식이라 할루시네이션
+> 리스크가 있었음. 지금은 항상 벡터 검색으로 실존 후보를 먼저 확보하고,
+> LLM은 그 후보 중에서 고르고 이유만 설명함 — 네이버 재검증 단계 자체가
+> 없어짐(후보가 이미 우리 DB의 검증된 책이라).
 
-1. 내 책장 데이터 조회
-2. pgvector로 유사 도서 후보 추출 (`getSimilarBooks`)
-3. Groq LLM에 책장 + 유사 후보 전달 → `familiarBooks` 3권 + `challengeBooks` 2권 반환
+<details>
+<summary>무드 기반 추천 동작 흐름 (POST /ai-recommend)</summary>
+
+1. `currentMood` + `userTalk`를 임베딩
+2. `BookEmbedding` 전역 풀(알라딘 배치 시딩 + 사용자들이 추가한 책)에서 벡터 검색으로 후보 8권 확보 (`booksService.searchByVector`)
+3. Gemini에 후보 목록만 전달 → 후보 중에서 최대 3권 골라 이유와 함께 반환
+4. LLM이 고른 제목을 후보 목록과 대조해 완전한 책 정보(isbn·이미지·설명)로 복원
+
+후보 풀이 비어 있으면(시딩 전) "아직 추천할 만한 책 데이터가 충분하지 않아요" 반환.
+
+</details>
+
+<details>
+<summary>취향 추천 동작 흐름 (GET /ai-recommend/taste)</summary>
+
+1. 내 책장 데이터 조회 (0권이면 "서재에 책을 담아주시면..." 안내로 조기 반환)
+2. `getSimilarBooks()`로 전역 풀에서 유사 도서 후보 8권 추출 (내가 이미 가진 책은 `Bookshelf` 조인으로 제외)
+3. Gemini에 책장 + 후보 전달 → 후보 중에서만 `familiarBooks` 최대 3권 + `challengeBooks` 최대 2권 반환
+4. 후보 목록에 없는 제목을 LLM이 답하면 그 항목만 걸러냄(정상 동작에선 발생하지 않아야 함)
 
 </details>
 
@@ -185,11 +230,13 @@ bookArchive/
 <details>
 <summary>동작 흐름</summary>
 
-1. 사용자 질문을 Gemini로 벡터화
-2. pgvector `<=>` 연산자로 내 책장에서 유사 도서 5권 추출
-3. 도서 정보(상태·감상·감정·AI태그·독서기간)를 컨텍스트로 구성
-4. Groq LLM에 시스템 프롬프트 + 현재 세션 대화 히스토리 + 컨텍스트 전달
-5. SSE(Server-Sent Events)로 응답을 토큰 단위로 스트리밍
+1. `roomId` 소유권 검증 (다른 유저 방에 메시지가 꽂히지 않도록)
+2. 사용자 질문을 Gemini로 벡터화
+3. 책 내용(`BookEmbedding`, 전역 풀이지만 `Bookshelf` 조인으로 내 책장 범위로 제한)과 사용자 감상(`BookshelfEmbedding`, 유저 스코프) 양쪽에서 검색해 더 가까운 쪽 채택 — 상위 5권
+4. 도서 정보(상태·감상·감정·AI태그·독서기간)를 컨텍스트로 구성
+5. **대화 히스토리는 클라이언트가 안 보냄** — 서버가 DB(`ChatMessage`)에서 최근 12개를 직접 조회해 시스템 프롬프트 + 컨텍스트와 함께 Gemini에 전달
+6. SSE(Server-Sent Events)로 응답을 토큰 단위로 스트리밍
+7. 클라이언트가 중단하거나 연결이 끊기면 `AbortController`로 Gemini 호출 자체도 취소. 스트림 중 실패 시 `{error}` SSE 이벤트로 명시적으로 알림
 
 </details>
 
@@ -313,7 +360,9 @@ Step1Status  :  독서 상태 및 의도
 | `ChatLisgPage` | 채팅 목록 UI |
 | `ChatRoomPage` | 실시간 스트리밍 채팅 UI |
 
-- 대화 히스토리를 매 요청마다 함께 전송해 문맥 유지
+- `roomId`와 현재 메시지만 전송 — 대화 히스토리는 서버가 DB에서 직접 조회(클라이언트가 보내지 않음)
+- `EventSource` 대신 `fetch` + `ReadableStream`으로 SSE를 직접 파싱(POST + JWT 헤더가 필요해서 `EventSource`로는 불가능). 청크 경계에서 잘린 이벤트는 버퍼에 모아뒀다가 이어붙이고, `TextDecoder`도 스트리밍 모드로 멀티바이트(한글) 깨짐 방지
+- `AbortController`로 응답 중단 가능(중단 버튼). 연결 실패는 초기 연결 단계에서만 짧게 재시도, 스트림이 이미 시작된 뒤 끊기면 에러 이벤트로 명시적으로 알림
 - SSE 스트림을 청크 단위로 파싱해 타이핑 애니메이션 효과 구현
 - Shift+Enter 줄바꿈 / Enter 전송
 
@@ -341,8 +390,9 @@ Step1Status  :  독서 상태 및 의도
 
 | 서비스 | 용도 | 사용 위치 |
 |--------|------|----------|
-| Naver Books API | 도서 메타데이터 검색 | `server/books` · `client/feature/books` |
-| Groq (`llama-3.3-70b`) | AI 코멘트·추천·리포트·명언 | `server/ai` |
-| Google Gemini (`embedding-001`) | 텍스트 → 벡터 변환 | `server/embedding` |
+| Naver Books API | 사용자 실시간 도서 검색 | `server/books` · `client/feature/books` |
+| 알라딘 Open API | 추천 후보 풀 배치 시딩(베스트셀러 목록 조회) | `server/aladin`, `server/scripts` |
+| Google Gemini (`gemini-2.5-flash`) | AI 코멘트·추천·리포트·명언·채팅 생성, 무료 티어 | `server/ai` |
+| Google Gemini (`gemini-embedding-001`) | 텍스트 → 벡터 변환, 무료 티어 하루 1000건 | `server/embedding` |
 | Toss Payments | 멤버십 결제 처리 | `server/payment` · `client/feature/payment` |
 | PostgreSQL + pgvector | 데이터 저장 · 벡터 유사도 검색 | `server` 전체 |

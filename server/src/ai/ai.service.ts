@@ -90,12 +90,16 @@ export class AiService {
   async generateBookRecommendations(
     currentMood: string,
     userTalk: string,
+    candidates: { title: string; author: string; description: string }[],
   ): Promise<AIRecommendDraft> {
     try {
       const model = this.genAI.getGenerativeModel({
         model: MODEL,
         systemInstruction: `
   당신은 사용자의 기분과 고민을 분석해 완벽한 도서를 처방하는 '심리상담 북 큐레이터'입니다.
+
+  아래 [후보 도서 목록]에 있는 책 중에서만 골라야 합니다. 목록에 없는 책은
+  절대로 추천하지 마세요 — 실존하지 않는 책을 지어내면 안 됩니다.
 
   [분석 규칙]
   1. 카테고리가 '휴식/안정' 또는 '불안/슬픔'일 때:
@@ -110,7 +114,7 @@ export class AiService {
   {
     reason: 사용자의 고민에 깊이 공감하고(1문장), 왜 이 책들이 지금 이 상황에 휴식이 되거나 도움이 되는지(1문장) 다정하게 설명하세요.
     "books": [
-      { "title": "책 제목", "author": "저자" }
+      { "title": "후보 목록에 있는 제목 그대로", "author": "저자" }
     ]
   }
             `,
@@ -123,8 +127,9 @@ export class AiService {
       const result = await model.generateContent(`
               [현재 무드]: ${currentMood}
               [사용자의 고민/상황]: ${userTalk}
+              [후보 도서 목록]: ${JSON.stringify(candidates)}
 
-              위의 무드와 상황을 겪고 있는 사용자에게 가장 필요한 책을 3권 추천해줘.
+              후보 목록 중에서 지금 상황에 가장 필요한 책을 최대 3권 골라줘.
               - 현재 무드가 '지친' 상태이고 고민이 '인간관계'라면, 위로가 되거나 관계의 기술을 알려주는 책 위주로.
               - 단순히 제목 매칭이 아니라, 사용자의 마음을 어루만져 줄 수 있는 '독서 처방' 관점에서 골라줘.
             `);
@@ -244,15 +249,17 @@ export class AiService {
         model: MODEL,
         systemInstruction: `당신은 최신 도서 트렌드를 꿰뚫고 있는 전문 북 큐레이터입니다. 반드시 아래의 JSON 구조를 엄격히 지켜 응답하세요.
             응답에는 오직 JSON만 포함하며, 다른 설명이나 텍스트는 금지합니다.
-            베스트셀러 책 하나는 꼭 포함시켜주세요.
+
+            [추천 후보 도서] 목록에 있는 책 중에서만 골라야 합니다. 목록에 없는
+            책은 절대로 추천하지 마세요 — 실존하지 않는 책을 지어내면 안 됩니다.
 
             {
               "tasteSummary": "문자열 (사용자의 취향 분석 요약)",
               "familiarBooks": [
-                { "title": "문자열", "reason": "문자열" }
+                { "title": "후보 목록에 있는 제목 그대로", "reason": "문자열" }
               ],
               "challengeBooks": [
-                { "title": "문자열", "reason": "문자열" }
+                { "title": "후보 목록에 있는 제목 그대로", "reason": "문자열" }
               ]
             }`,
         generationConfig: {
@@ -266,8 +273,8 @@ export class AiService {
               [추천 후보 도서]: ${JSON.stringify(similarBooks)}
 
               분석 지시:
-              1. 'familiarBooks': 사용자의 책장에 있는 책들과 장르, 주제, 문체가 매우 유사한 책 3권을 추천 후보 중에서 고르거나 새로 제안하세요.
-              2. 'challengeBooks': 기존 취향과 연결고리가 있지만, 새로운 시각을 줄 수 있는 책 2권을 추천하세요.
+              1. 'familiarBooks': 사용자의 책장에 있는 책들과 장르, 주제, 문체가 매우 유사한 책을 후보 중에서 최대 3권 고르세요.
+              2. 'challengeBooks': 기존 취향과 연결고리가 있지만, 새로운 시각을 줄 수 있는 책을 후보 중에서 최대 2권 고르세요.
               3. 각 추천 이유에는 "당신이 읽었던 'OOO'과 이런 점이 비슷하여 추천합니다"라는 구체적인 언급을 포함하세요.
             `);
 
