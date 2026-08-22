@@ -91,7 +91,12 @@ export class BookshelfService {
     `;
 
     if (!Array.isArray(existingEmbedding) || existingEmbedding.length === 0) {
-      const textToEmbed = `제목: ${book.title} 저자: ${book.author} 설명: ${book.description ?? ''}`;
+      // 제목/저자는 이미 Book 테이블에 구조화된 컬럼으로 있으니 임베딩엔 안 섞고,
+      // 의미 있는 내용이 담긴 description 위주로 임베딩. description이 없는 경우만
+      // 제목/저자로 폴백해서 최소한의 벡터는 만들어둠.
+      const textToEmbed = book.description?.trim()
+        ? book.description
+        : `${book.title} ${book.author}`;
 
       try {
         const embedding =
@@ -302,7 +307,10 @@ export class BookshelfService {
 
     if (!userAvgVector || userAvgVector.length === 0) return [];
 
+    // 사용자가 책이 0권이면 AVG(embedding)이 NULL인 행 하나가 돌아오는데(빈 집합이
+    // 아님), 그 NULL을 그대로 벡터 정렬에 쓰면 정렬 기준 없이 아무 책이나 반환됨.
     const avgVector = userAvgVector[0].embedding;
+    if (!avgVector) return [];
 
     const similarBooks = await this.prisma.$queryRaw<SimilarBookResult[]>`
     SELECT b.title, b.author

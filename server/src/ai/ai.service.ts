@@ -24,7 +24,7 @@ export class AiService {
   ): Promise<AITagResponseDto> {
     try {
       const chatCompletion = await this.groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: 'qwen/qwen3.6-27b',
         messages: [
           {
             role: 'system',
@@ -47,6 +47,7 @@ export class AiService {
         ],
         response_format: { type: 'json_object' },
         temperature: 0.7,
+        reasoning_effort: 'none',
       });
 
       const rawContent = chatCompletion.choices[0]?.message?.content;
@@ -90,7 +91,7 @@ export class AiService {
   ): Promise<AIRecommendDraft> {
     try {
       const completion = await this.groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: 'qwen/qwen3.6-27b',
         messages: [
           {
             role: 'system',
@@ -129,6 +130,7 @@ export class AiService {
         ],
         response_format: { type: 'json_object' },
         temperature: 0.7,
+        reasoning_effort: 'none',
       });
 
       const raw = completion.choices[0]?.message?.content;
@@ -188,7 +190,7 @@ export class AiService {
               : '겨울';
 
       const completion = await this.groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: 'qwen/qwen3.6-27b',
         messages: [
           {
             role: 'system',
@@ -210,6 +212,7 @@ export class AiService {
         ],
         response_format: { type: 'json_object' },
         temperature: 0.8,
+        reasoning_effort: 'none',
       });
 
       const raw = completion.choices[0]?.message?.content;
@@ -246,7 +249,7 @@ export class AiService {
   ): Promise<AITasteRecommendResponseDto> {
     try {
       const completion = await this.groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: 'qwen/qwen3.6-27b',
         messages: [
           {
             role: 'system',
@@ -279,6 +282,7 @@ export class AiService {
         ],
         response_format: { type: 'json_object' },
         temperature: 0.7,
+        reasoning_effort: 'none',
       });
 
       const raw = completion.choices[0]?.message?.content;
@@ -301,11 +305,12 @@ export class AiService {
   ) {
     return await this.groq.chat.completions.create(
       {
-        model: 'llama-3.3-70b-versatile',
+        model: 'qwen/qwen3.6-27b',
         messages,
         stream: true,
         temperature: 0.7,
         max_tokens: 1024,
+        reasoning_effort: 'none',
       },
       { signal },
     );
@@ -316,7 +321,7 @@ export class AiService {
   ): Promise<AIBookReportDto> {
     try {
       const completion = await this.groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: 'qwen/qwen3.6-27b',
         messages: [
           {
             role: 'system',
@@ -382,6 +387,7 @@ export class AiService {
         ],
         response_format: { type: 'json_object' },
         temperature: 0.7,
+        reasoning_effort: 'none',
       });
 
       const raw = completion.choices[0]?.message?.content;
