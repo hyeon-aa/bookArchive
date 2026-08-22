@@ -354,8 +354,12 @@ export class BookshelfService {
           userId,
         },
       });
+
+      // BookEmbedding(책 내용 임베딩)은 전역 인덱스라 여기서 지우면 안 됨 —
+      // 다른 사용자의 책장이나 알라딘 시딩 추천 후보 풀이 같은 책을 참조 중일 수
+      // 있음. 유저 스코프인 BookshelfEmbedding(내 감상 임베딩)만 정리한다.
       await tx.$executeRaw`
-        DELETE FROM "BookEmbedding"
+        DELETE FROM "BookshelfEmbedding"
         WHERE "userId" = ${userId}
         AND "bookId" IN (${Prisma.join(bookIds)})
       `;
