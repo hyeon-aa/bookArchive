@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { SimilarBookResult } from 'src/bookshelf/dto/bookshelf-response.dto';
 import { EmbeddingService } from 'src/embedding/embedding.service';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -134,10 +135,34 @@ export class AirecommendService {
     }
   }
 
+  // 지금 책장 상태를 나타내는 서명. bookId를 createdAt DESC 순서 그대로
+  // 이어붙여서, 책이 추가/삭제되거나 담긴 순서(최근 5권 판단 기준)가
+  // 바뀌면 이 문자열도 반드시 달라지게 한다 — getTasteRecommendations의
+  // 캐시 무효화 기준으로 씀.
+  private async getBookshelfSignature(userId: number): Promise<string> {
+    const rows = await this.prisma.bookshelf.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: { bookId: true },
+    });
+    return rows.map((r) => r.bookId).join(',');
+  }
+
   async getTasteRecommendations(
     userId: number,
   ): Promise<AITasteRecommendResponseDto> {
     try {
+      const currentSignature = await this.getBookshelfSignature(userId);
+
+      // 책장 상태가 마지막 캐시 때와 똑같으면(새로 담거나 뺀 책 없음)
+      // 벡터 검색·Gemini 호출 없이 캐시를 그대로 반환.
+      const cached = await this.prisma.tasteRecommendationCache.findUnique({
+        where: { userId },
+      });
+      if (cached && cached.bookshelfSignature === currentSignature) {
+        return cached.result as unknown as AITasteRecommendResponseDto;
+      }
+
       // 1. 내 서재 데이터 가져오기
       const myBooks = await this.bookshelfService.getMyBooks(userId);
 
@@ -217,12 +242,28 @@ export class AirecommendService {
         'taste',
       );
 
-      return {
+      const response: AITasteRecommendResponseDto = {
         tasteSummary:
           aiResult?.tasteSummary || '당신의 독서 취향을 분석한 결과입니다.',
         familiarBooks,
         challengeBooks,
       };
+
+      // 다음 요청부터는 책장이 그대로인 한 이 결과를 그대로 재사용.
+      await this.prisma.tasteRecommendationCache.upsert({
+        where: { userId },
+        create: {
+          userId,
+          bookshelfSignature: currentSignature,
+          result: response as unknown as Prisma.InputJsonValue,
+        },
+        update: {
+          bookshelfSignature: currentSignature,
+          result: response as unknown as Prisma.InputJsonValue,
+        },
+      });
+
+      return response;
     } catch (error) {
       console.error('[Taste Recommend Error]', error);
       return {

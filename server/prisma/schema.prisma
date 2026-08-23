@@ -107,6 +107,18 @@ model RecommendationLog {
   @@index([source])
 }
 
+// 취향 추천(getTasteRecommendations) 결과 캐시. bookshelfSignature는 그
+// 시점의 사용자 책장 상태(bookId를 createdAt DESC로 이어붙인 문자열)를
+// 담아서, 다음 요청 때 현재 책장 상태와 비교해 책이 새로 추가/삭제됐을
+// 때만 벡터 검색 + Gemini 호출을 다시 하고 그 외엔 이 캐시를 그대로 반환.
+model TasteRecommendationCache {
+  id                 Int      @id @default(autoincrement())
+  userId             Int      @unique
+  bookshelfSignature String
+  result             Json
+  updatedAt          DateTime @updatedAt
+}
+
 model Payment {
   id            Int      @id @default(autoincrement())
   orderId       String   @unique
