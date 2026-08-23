@@ -4,6 +4,7 @@ import { useSignUp } from "@/feature/auth/queries";
 import { SignUpRequest } from "@/feature/auth/type";
 import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { AuthLayout } from "../(auth)/AuthLayout";
 
@@ -14,6 +15,7 @@ interface SignUpFormValues extends SignUpRequest {
 export default function SignUpPage() {
   const router = useRouter();
   const { mutate: signUp, isPending } = useSignUp();
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const {
     register,
@@ -33,6 +35,7 @@ export default function SignUpPage() {
   const password = watch("password");
 
   const onSubmit = (data: SignUpFormValues) => {
+    setServerError(null);
     const signUpData: SignUpRequest = {
       name: data.name,
       email: data.email,
@@ -44,7 +47,7 @@ export default function SignUpPage() {
         router.push("/login");
       },
       onError: (error) => {
-        console.error(error);
+        setServerError(error.message);
       },
     });
   };
@@ -116,6 +119,7 @@ export default function SignUpPage() {
                   value: /\S+@\S+\.\S+/,
                   message: "이메일 형식이 올바르지 않습니다",
                 },
+                onChange: () => setServerError(null),
               })}
               type="email"
               placeholder="example@email.com"
@@ -211,6 +215,12 @@ export default function SignUpPage() {
             </p>
           )}
         </div>
+
+        {serverError && (
+          <p className="text-red-500 text-sm text-center -mb-1">
+            {serverError}
+          </p>
+        )}
 
         <button
           type="submit"
