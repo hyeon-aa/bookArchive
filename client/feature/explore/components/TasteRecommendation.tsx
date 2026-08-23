@@ -141,8 +141,11 @@ export function TasteRecommendation({
               <h3 className="text-[12px] font-bold text-[#3F3F3F] line-clamp-1 group-hover:text-[#A6BCAF] transition-colors">
                 {item.book.title}
               </h3>
-              <p className="text-[10px] text-[#9CA3AF] line-clamp-1 mb-2">
+              <p className="text-[10px] text-[#9CA3AF] line-clamp-1 mb-1">
                 {item.book.author}
+              </p>
+              <p className="text-[10px] text-[#7C857E] line-clamp-3 leading-relaxed mb-2">
+                {item.reason}
               </p>
 
               <button
