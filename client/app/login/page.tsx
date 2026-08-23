@@ -4,6 +4,7 @@ import { useLogin } from "@/feature/auth/queries";
 import { LoginRequest } from "@/feature/auth/type";
 import { useAuthStore } from "@/shared/store/useAuthStore";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { AuthLayout } from "../(auth)/AuthLayout";
 
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { setLogin } = useAuthStore();
   const { mutate: login, isPending } = useLogin();
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const {
     register,
@@ -24,13 +26,14 @@ export default function LoginPage() {
   });
 
   const onSubmit = (data: LoginRequest) => {
+    setServerError(null);
     login(data, {
       onSuccess: (res) => {
         setLogin(res.user, res.accessToken);
         router.push("/");
       },
       onError: (error) => {
-        console.error(error);
+        setServerError(error.message);
       },
     });
   };
@@ -58,7 +61,10 @@ export default function LoginPage() {
             이메일
           </label>
           <input
-            {...register("email", { required: "이메일을 입력해주세요" })}
+            {...register("email", {
+              required: "이메일을 입력해주세요",
+              onChange: () => setServerError(null),
+            })}
             type="email"
             placeholder="example@email.com"
             disabled={isPending}
@@ -74,7 +80,10 @@ export default function LoginPage() {
             비밀번호
           </label>
           <input
-            {...register("password", { required: "비밀번호를 입력해주세요" })}
+            {...register("password", {
+              required: "비밀번호를 입력해주세요",
+              onChange: () => setServerError(null),
+            })}
             type="password"
             placeholder="비밀번호를 입력하세요"
             disabled={isPending}
@@ -86,6 +95,12 @@ export default function LoginPage() {
             </p>
           )}
         </div>
+
+        {serverError && (
+          <p className="text-red-500 text-sm text-center -mb-1">
+            {serverError}
+          </p>
+        )}
 
         <button
           type="submit"
