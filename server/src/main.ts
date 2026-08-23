@@ -34,8 +34,9 @@ async function bootstrap() {
     }),
   );
 
-  // 2. 포트를 4000으로 고정합니다.
-  const port = 4000;
+  // 2. Render 등 배포 환경은 자체 PORT를 주입하므로 그걸 우선 쓰고,
+  // 없으면(로컬 개발) 4000으로 폴백한다.
+  const port = process.env.PORT ? Number(process.env.PORT) : 4000;
   await app.listen(port);
 }
 bootstrap();
