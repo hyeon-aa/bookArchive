@@ -292,45 +292,85 @@ export class BookshelfService {
     };
   }
 
+  // BookEmbedding엔 더 이상 userId가 없어서(전역 콘텐츠 인덱스), 사용자가 어떤
+  // 책을 가지고 있는지는 Bookshelf를 거쳐서 알아낸다.
+  //
+  // 예전엔 최근 5권 임베딩을 평균낸 벡터 "하나"로 검색했는데, leave-one-out
+  // 오프라인 검증(eval-recommendation-retrieval.ts)으로 실제 문제를 확인함 —
+  // 유저 취향이 여러 장르에 걸쳐 있으면 평균 벡터가 그 중 어느 장르에도
+  // 안 가까운 곳으로 흐려짐. 특히 어떤 장르를 책 1권만 가지고 있으면, 그
+  // 장르 자체가 후보에서 통째로 사라지는 걸 직접 확인함(경제경영 1권짜리
+  // 유저 케이스에서 rank 214까지 밀림).
+  //
+  // 그래서 평균으로 뭉치지 않고, 최근 5권 "각각"과 가장 가까운 후보를 찾아
+  // 합친다(item-based) — 후보의 최종 거리는 소유한 책들 중 가장 가까운
+  // 하나까지의 거리(MIN)로 정한다. 아마존 "이 상품을 산 사람들이 이것도
+  // 샀어요"와 같은 방식. extraFilter로 challengeBooks의 장르 배제 조건을
+  // 주입한다.
+  private async searchByOwnedBooks(
+    userId: number,
+    limit: number,
+    extraFilter: Prisma.Sql,
+  ): Promise<SimilarBookResult[]> {
+    // 제목/저자만이 아니라 isbn·설명·이미지까지 전부 반환해서, 이후 LLM이 이 후보
+    // 중에서 고른 제목을 다시 네이버로 검증할 필요 없이 바로 완전한 책 정보를 쓸 수 있게 함.
+    return this.prisma.$queryRaw<SimilarBookResult[]>`
+    WITH recent_books AS (
+      SELECT be.embedding
+      FROM (
+        SELECT "bookId"
+        FROM "Bookshelf"
+        WHERE "userId" = ${userId}
+        ORDER BY "createdAt" DESC
+        LIMIT 5
+      ) recent
+      JOIN "BookEmbedding" be ON be."bookId" = recent."bookId"
+    )
+    SELECT b.id, b.isbn, b.title, b.author, b."imageUrl", b.description
+    FROM "Book" b
+    JOIN "BookEmbedding" be ON b.id = be."bookId"
+    CROSS JOIN recent_books rb
+    WHERE b.id NOT IN (
+      SELECT "bookId" FROM "Bookshelf" WHERE "userId" = ${userId}
+    )
+    ${extraFilter}
+    GROUP BY b.id, b.isbn, b.title, b.author, b."imageUrl", b.description
+    ORDER BY MIN(be.embedding <=> rb.embedding)
+    LIMIT ${limit}
+  `;
+    // recent_books가 0행(책 0권)이면 CROSS JOIN 결과도 자동으로 0행이라
+    // 별도 NULL 체크 없이 빈 배열이 반환됨.
+  }
+
   async getSimilarBooks(
     userId: number,
     limit: number = 5,
   ): Promise<SimilarBookResult[]> {
-    // BookEmbedding엔 더 이상 userId가 없어서(전역 콘텐츠 인덱스), 사용자가 어떤
-    // 책을 가지고 있는지는 Bookshelf를 거쳐서 알아낸 뒤 해당 책들의 임베딩을 평균낸다.
-    const userAvgVector = await this.prisma.$queryRaw<{ embedding: string }[]>`
-    SELECT AVG(be.embedding)::text as embedding
-    FROM (
-      SELECT "bookId"
-      FROM "Bookshelf"
-      WHERE "userId" = ${userId}
-      ORDER BY "createdAt" DESC
-      LIMIT 5
-    ) recent
-    JOIN "BookEmbedding" be ON be."bookId" = recent."bookId"
+    return this.searchByOwnedBooks(userId, limit, Prisma.empty);
+  }
+
+  // "새로운 도전" 후보. familiarBooks와 똑같은 기준으로만 검색하면 결국
+  // 취향과 제일 가까운, 즉 가장 "안 새로운" 책이 나온다(실제로 확인된 문제 —
+  // 이미 읽은 작가의 다른 책이 challengeBooks에 섞여 나왔음). 그래서 사용자가
+  // 이미 읽은 장르(Book.category)를 코드 레벨로 배제해서, 취향과 아예 무관한
+  // 게 아니라 벡터상 가깝되 장르는 낯선 책만 후보에 오르게 한다.
+  async getChallengeBooks(
+    userId: number,
+    limit: number = 5,
+  ): Promise<SimilarBookResult[]> {
+    const ownedCategories = await this.prisma.$queryRaw<{ category: string }[]>`
+    SELECT DISTINCT b.category
+    FROM "Bookshelf" bs
+    JOIN "Book" b ON b.id = bs."bookId"
+    WHERE bs."userId" = ${userId} AND b.category IS NOT NULL
   `;
+    const categories = ownedCategories.map((c) => c.category);
+    const excludeOwnedCategoriesFilter =
+      categories.length > 0
+        ? Prisma.sql`AND b.category IS NOT NULL AND b.category != ALL(${categories})`
+        : Prisma.sql`AND b.category IS NOT NULL`;
 
-    if (!userAvgVector || userAvgVector.length === 0) return [];
-
-    // 사용자가 책이 0권이면 AVG(embedding)이 NULL인 행 하나가 돌아오는데(빈 집합이
-    // 아님), 그 NULL을 그대로 벡터 정렬에 쓰면 정렬 기준 없이 아무 책이나 반환됨.
-    const avgVector = userAvgVector[0].embedding;
-    if (!avgVector) return [];
-
-    // 제목/저자만이 아니라 isbn·설명·이미지까지 전부 반환해서, 이후 LLM이 이 후보
-    // 중에서 고른 제목을 다시 네이버로 검증할 필요 없이 바로 완전한 책 정보를 쓸 수 있게 함.
-    const similarBooks = await this.prisma.$queryRaw<SimilarBookResult[]>`
-    SELECT b.id, b.isbn, b.title, b.author, b."imageUrl", b.description
-    FROM "Book" b
-    JOIN "BookEmbedding" be ON b.id = be."bookId"
-    WHERE be."bookId" NOT IN (
-      SELECT "bookId" FROM "Bookshelf" WHERE "userId" = ${userId}
-    )
-    ORDER BY be.embedding <=> ${avgVector}::vector
-    LIMIT ${limit}
-  `;
-
-    return similarBooks;
+    return this.searchByOwnedBooks(userId, limit, excludeOwnedCategoriesFilter);
   }
 
   async deleteBooks(userId: number, bookshelfIds: number[]) {
