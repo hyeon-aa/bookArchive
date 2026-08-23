@@ -95,7 +95,7 @@ export function TasteRecommendation({
                   <p className="text-[11px] text-[#9CA3AF] mb-1">
                     {item.book.author}
                   </p>
-                  <p className="text-[11px] text-[#7C857E] line-clamp-2 leading-relaxed">
+                  <p className="text-[11px] text-[#7C857E] leading-relaxed">
                     {item.reason}
                   </p>
                 </div>
@@ -122,41 +122,47 @@ export function TasteRecommendation({
             Challenge
           </span>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-3">
           {tasteData.challengeBooks.map((item, i) => (
             <div
               key={i}
-              className="group p-4 rounded-2xl border border-[#EEF0ED] bg-white shadow-sm hover:shadow-md hover:border-[#A6BCAF]/20 transition-all flex flex-col"
+              className="group flex gap-4 p-4 rounded-2xl bg-white border border-[#EEF0ED] shadow-sm hover:shadow-md hover:border-[#A6BCAF]/30 transition-all"
             >
-              <div className="relative w-full aspect-[3/4] mb-3">
+              <div className="relative w-14 h-20 flex-shrink-0">
                 <Image
                   src={item.book.imageUrl || "/placeholder-book.png"}
                   alt={item.book.title}
                   sizes="98px"
                   fill
-                  className="rounded-lg object-cover"
+                  className="rounded object-cover shadow-sm"
                 />
+                <div className="absolute -top-1 -right-1 bg-[#A6BCAF] rounded-full p-1">
+                  <Compass size={8} className="text-white" />
+                </div>
               </div>
 
-              <h3 className="text-[12px] font-bold text-[#3F3F3F] line-clamp-1 group-hover:text-[#A6BCAF] transition-colors">
-                {item.book.title}
-              </h3>
-              <p className="text-[10px] text-[#9CA3AF] line-clamp-1 mb-1">
-                {item.book.author}
-              </p>
-              <p className="text-[10px] text-[#7C857E] line-clamp-3 leading-relaxed mb-2">
-                {item.reason}
-              </p>
+              <div className="flex flex-col justify-between flex-1">
+                <div>
+                  <h3 className="text-[13px] font-bold text-[#3F3F3F] group-hover:text-[#A6BCAF] transition-colors">
+                    {item.book.title}
+                  </h3>
+                  <p className="text-[11px] text-[#9CA3AF] mb-1">
+                    {item.book.author}
+                  </p>
+                  <p className="text-[11px] text-[#7C857E] leading-relaxed">
+                    {item.reason}
+                  </p>
+                </div>
 
-              <button
-                onClick={() => handleAddToLibrary(item.book)}
-                className="mt-auto flex items-center justify-center gap-1 py-2 rounded-xl
-                 bg-[#F1F5F2] text-[#7C9885] text-[10px] font-bold
-                 hover:bg-[#7C9885] hover:text-white transition-all active:scale-95 shadow-sm"
-              >
-                <Plus size={12} />
-                담기
-              </button>
+                <button
+                  onClick={() => handleAddToLibrary(item.book)}
+                  className="mt-2 flex items-center justify-center gap-1 py-2 rounded-xl
+                   bg-[#F1F5F2] text-[#7C9885] text-[10px] font-bold
+                   hover:bg-[#7C9885] hover:text-white transition-all active:scale-95 shadow-sm"
+                >
+                  <Plus size={12} />내 책장에 담기
+                </button>
+              </div>
             </div>
           ))}
         </div>
