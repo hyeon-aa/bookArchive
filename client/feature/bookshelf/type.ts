@@ -6,7 +6,6 @@ export interface UpdateBookshelfRequest {
   emotion?: string;
   startDate?: string;
   endDate?: string;
-  title?: string;
   phrase?: string;
   intent?: string;
   sub?: string;
