@@ -36,7 +36,6 @@ export function BookshelfRecordForm({ item }: { item: BookshelfItemResponse }) {
       endDate: item.endDate
         ? new Date(item.endDate).toISOString().split("T")[0]
         : "",
-      title: item.book.title,
       intent: item.intent || "",
       sub: item.sub || "",
     },
