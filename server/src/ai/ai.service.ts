@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GenerationConfig, GoogleGenerativeAI } from '@google/generative-ai';
 import {
   AiReportRequestDto,
   DailyQuoteResponseDto,
 } from 'src/airecommend/dto/ai-recommend.dto';
 import { AIRecommendDraft } from 'src/airecommend/types/ai-recommend.type';
-import { SimilarBookResult } from 'src/bookshelf/dto/bookshelf-response.dto';
 import { AITagRequestDto } from './dto/ai-request.dto';
 import {
   AIBookReportDto,
@@ -15,6 +14,21 @@ import {
 
 // 무료 티어 대상 모델. Pro는 2026-04부터 무료 티어에서 제외됨.
 const MODEL = 'gemini-2.5-flash';
+
+// @google/generative-ai(0.24.1, 레거시 SDK)의 GenerationConfig 타입엔
+// thinkingConfig가 없지만 REST API 자체는 지원함(curl로 직접 검증).
+// gemini-2.5 계열은 기본적으로 내부 reasoning에 토큰을 쓰는데, 이게
+// maxOutputTokens 예산을 먹어버려서 실제 응답이 짧은데도 finishReason이
+// MAX_TOKENS로 문장 중간에 끊기는 문제가 있었음(채팅에서 재현·확인).
+// 여기선 구조화된 JSON 응답이나 정해진 톤의 짧은 답변만 필요해서 thinking이
+// 필요 없으므로 전부 끔.
+interface GenerationConfigWithThinking extends GenerationConfig {
+  thinkingConfig?: { thinkingBudget: number };
+}
+
+function noThinking(config: GenerationConfig): GenerationConfigWithThinking {
+  return { ...config, thinkingConfig: { thinkingBudget: 0 } };
+}
 
 export interface ChatTurn {
   role: 'user' | 'assistant';
@@ -42,10 +56,10 @@ export class AiService {
               "comment": "사용자의 감정을 구체적으로 짚어주고, 책의 의미를 확장해주는 2~3문장",
               "tags": ["감정 기반 태그", "책의 주제 태그", "성찰 키워드"]
             }`,
-        generationConfig: {
+        generationConfig: noThinking({
           temperature: 0.7,
           responseMimeType: 'application/json',
-        },
+        }),
       });
 
       const result = await model.generateContent(`[책 제목]: ${input.bookTitle}
@@ -89,6 +103,7 @@ export class AiService {
 
   async generateBookRecommendations(
     currentMood: string,
+    moodGroup: string | null,
     userTalk: string,
     candidates: { title: string; author: string; description: string }[],
   ): Promise<AIRecommendDraft> {
@@ -101,14 +116,18 @@ export class AiService {
   아래 [후보 도서 목록]에 있는 책 중에서만 골라야 합니다. 목록에 없는 책은
   절대로 추천하지 마세요 — 실존하지 않는 책을 지어내면 안 됩니다.
 
-  [분석 규칙]
-  1. 카테고리가 '휴식/안정' 또는 '불안/슬픔'일 때:
+  [분석 규칙] — 아래 판단은 사용자 입력의 [무드 그룹] 값을 기준으로 하세요.
+  1. [무드 그룹]이 '휴식/안정' 또는 '불안/슬픔'일 때:
      - 절대 '성공법', '성장', '인간관계 기술', '자기계발'을 추천하지 마세요.
      - 대신 따뜻한 문체의 에세이, 위로가 되는 소설, 혹은 "아무것도 안 해도 된다"는 메시지의 책을 추천하세요.
-  2. 카테고리가 '변화/동기'일 때:
+  2. [무드 그룹]이 '변화/동기'일 때:
      - 새로운 관점을 주는 인문학이나, 열정을 깨우는 자기계발서도 허용됩니다.
-  3. 카테고리가 '감성/추억'일 때:
+  3. [무드 그룹]이 '감성/추억'일 때:
      - 서정적인 소설이나 시집, 클래식한 문학을 추천하세요.
+  4. [무드 그룹]이 '활기/기쁨'일 때:
+     - 밝고 몰입감 있는 장르 소설(판타지·추리·SF·로맨스)을 적극 추천하세요.
+  5. [무드 그룹]이 비어 있을 때(분류 안 됨):
+     - 위 규칙에 얽매이지 말고, [현재 무드]와 [사용자의 고민/상황] 텍스트 자체의 뉘앙스로 판단하세요.
   반드시 아래 JSON 형식으로만 응답하세요.
 
   {
@@ -118,14 +137,15 @@ export class AiService {
     ]
   }
             `,
-        generationConfig: {
+        generationConfig: noThinking({
           temperature: 0.7,
           responseMimeType: 'application/json',
-        },
+        }),
       });
 
       const result = await model.generateContent(`
               [현재 무드]: ${currentMood}
+              [무드 그룹]: ${moodGroup ?? '(분류 안 됨)'}
               [사용자의 고민/상황]: ${userTalk}
               [후보 도서 목록]: ${JSON.stringify(candidates)}
 
@@ -194,10 +214,10 @@ export class AiService {
         model: MODEL,
         systemInstruction:
           '당신은 독서 큐레이터 AI입니다. 반드시 JSON 형식으로만 응답하세요.',
-        generationConfig: {
+        generationConfig: noThinking({
           temperature: 0.8,
           responseMimeType: 'application/json',
-        },
+        }),
       });
 
       const result = await model.generateContent(
@@ -242,7 +262,16 @@ export class AiService {
 
   async generateTasteBasedRecommendations(
     books: { title: string; author: string; status: string }[],
-    similarBooks: SimilarBookResult[],
+    familiarCandidates: {
+      title: string;
+      author: string;
+      description: string;
+    }[],
+    challengeCandidates: {
+      title: string;
+      author: string;
+      description: string;
+    }[],
   ): Promise<AITasteRecommendResponseDto> {
     try {
       const model = this.genAI.getGenerativeModel({
@@ -250,31 +279,34 @@ export class AiService {
         systemInstruction: `당신은 최신 도서 트렌드를 꿰뚫고 있는 전문 북 큐레이터입니다. 반드시 아래의 JSON 구조를 엄격히 지켜 응답하세요.
             응답에는 오직 JSON만 포함하며, 다른 설명이나 텍스트는 금지합니다.
 
-            [추천 후보 도서] 목록에 있는 책 중에서만 골라야 합니다. 목록에 없는
-            책은 절대로 추천하지 마세요 — 실존하지 않는 책을 지어내면 안 됩니다.
+            아래에 후보 도서 목록이 두 개 주어집니다. familiarBooks는 반드시
+            [취향과 비슷한 후보]에서만, challengeBooks는 반드시 [새로운 장르 후보]
+            에서만 골라야 합니다 — 서로 목록을 바꿔서 고르거나, 목록에 없는 책을
+            지어내면 안 됩니다.
 
             {
               "tasteSummary": "문자열 (사용자의 취향 분석 요약)",
               "familiarBooks": [
-                { "title": "후보 목록에 있는 제목 그대로", "reason": "문자열" }
+                { "title": "[취향과 비슷한 후보]에 있는 제목 그대로", "reason": "문자열" }
               ],
               "challengeBooks": [
-                { "title": "후보 목록에 있는 제목 그대로", "reason": "문자열" }
+                { "title": "[새로운 장르 후보]에 있는 제목 그대로", "reason": "문자열" }
               ]
             }`,
-        generationConfig: {
+        generationConfig: noThinking({
           temperature: 0.7,
           responseMimeType: 'application/json',
-        },
+        }),
       });
 
       const result = await model.generateContent(`
               [사용자의 책장]: ${JSON.stringify(books)}
-              [추천 후보 도서]: ${JSON.stringify(similarBooks)}
+              [취향과 비슷한 후보]: ${JSON.stringify(familiarCandidates)}
+              [새로운 장르 후보]: ${JSON.stringify(challengeCandidates)}
 
               분석 지시:
-              1. 'familiarBooks': 사용자의 책장에 있는 책들과 장르, 주제, 문체가 매우 유사한 책을 후보 중에서 최대 3권 고르세요.
-              2. 'challengeBooks': 기존 취향과 연결고리가 있지만, 새로운 시각을 줄 수 있는 책을 후보 중에서 최대 2권 고르세요.
+              1. 'familiarBooks': [취향과 비슷한 후보] 중에서, 사용자의 책장에 있는 책들과 장르·주제·문체가 매우 유사한 책을 최대 3권 고르세요.
+              2. 'challengeBooks': [새로운 장르 후보] 중에서, 사용자의 기존 취향과 연결고리가 있으면서도 새로운 시각을 줄 수 있는 책을 최대 2권 고르세요. 이 후보들은 이미 장르 자체가 사용자에게 낯선 것들이니, 왜 그럼에도 시도해볼 만한지에 집중해서 이유를 쓰세요.
               3. 각 추천 이유에는 "당신이 읽었던 'OOO'과 이런 점이 비슷하여 추천합니다"라는 구체적인 언급을 포함하세요.
             `);
 
@@ -300,10 +332,10 @@ export class AiService {
     const model = this.genAI.getGenerativeModel({
       model: MODEL,
       systemInstruction,
-      generationConfig: {
+      generationConfig: noThinking({
         temperature: 0.7,
         maxOutputTokens: 1024,
-      },
+      }),
     });
 
     const result = await model.generateContentStream(
@@ -377,10 +409,10 @@ export class AiService {
             - "details"는 2~3개의 문장 배열로 작성하세요.
             - "traits"는 2~3개 작성하세요.
             `,
-        generationConfig: {
+        generationConfig: noThinking({
           temperature: 0.7,
           responseMimeType: 'application/json',
-        },
+        }),
       });
 
       const result = await model.generateContent(`

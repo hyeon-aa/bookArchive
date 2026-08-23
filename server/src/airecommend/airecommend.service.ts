@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { SimilarBookResult } from 'src/bookshelf/dto/bookshelf-response.dto';
 import { EmbeddingService } from 'src/embedding/embedding.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RecommendationLogService } from 'src/recommendation-log/recommendation-log.service';
 import { AiService } from '../ai/ai.service';
 import { BooksService } from '../books/books.service';
 import { BookshelfService } from '../bookshelf/bookshelf.service';
-import { getCategoriesForMood } from './constants/mood-category-map';
+import {
+  getCategoriesForMood,
+  getMoodGroupLabel,
+} from './constants/mood-category-map';
 import {
   AiRecommendRequestDto,
   AiReportResponseDto,
@@ -73,11 +77,23 @@ export class AirecommendService {
         };
       }
 
-      // 2. LLM에게는 후보 중에서 고르고 이유만 설명하게 함
+      // 2. LLM에게는 후보 중에서 고르고 이유만 설명하게 함. 프롬프트의
+      // [분석 규칙]이 무드 "그룹"(예: 불안/슬픔) 기준으로 분기하므로, 원본
+      // 형용사("막막한")뿐 아니라 그룹 라벨도 같이 넘겨서 LLM이 스스로
+      // 형용사→그룹을 추측하지 않아도 되게 한다.
+      const moodGroupLabel = getMoodGroupLabel(dto.currentMood);
+      // LLM 판단엔 title/author/description만 필요 — id·isbn·imageUrl·category
+      // 까지 그대로 넘기면 프롬프트에 불필요한 필드가 섞여 토큰만 낭비된다.
+      const promptCandidates = candidates.map((c) => ({
+        title: c.title,
+        author: c.author,
+        description: c.description,
+      }));
       const aiDraft = await this.aiService.generateBookRecommendations(
         dto.currentMood,
+        moodGroupLabel,
         dto.userTalk,
-        candidates,
+        promptCandidates,
       );
 
       // 3. LLM이 고른 제목을 후보 목록과 대조해 완전한 책 정보로 복원
@@ -133,11 +149,14 @@ export class AirecommendService {
         };
       }
 
-      // 2. 벡터 검색으로 유사한 책들 미리 가져오기 (공용 풀 대상 RAG 방식)
-      const similarBooks = await this.bookshelfService.getSimilarBooks(
-        userId,
-        8,
-      );
+      // 2. 후보를 두 갈래로 나눠서 검색 (공용 풀 대상 RAG 방식).
+      // familiar/challenge를 같은 풀에서 뽑으면 challenge도 결국 취향과
+      // 가장 가까운(=가장 안 새로운) 책이 나오는 문제가 있어서, challenge는
+      // 사용자가 안 읽은 장르로 코드 레벨에서 미리 걸러둔다.
+      const [familiarCandidates, challengeCandidates] = await Promise.all([
+        this.bookshelfService.getSimilarBooks(userId, 5),
+        this.bookshelfService.getChallengeBooks(userId, 5),
+      ]);
 
       // AI에게 전달할 형식으로 변환
       const formattedBooks = myBooks.map((item) => ({
@@ -146,22 +165,30 @@ export class AirecommendService {
         status: item.status || '읽기 전',
       }));
 
-      // 3. AI에게 추천 요청 (similarBooks 후보 중에서만 고르도록 프롬프트로 제약)
+      // 3. AI에게 추천 요청 (각 필드는 그 필드에 대응하는 후보 목록 안에서만 고르도록 프롬프트로 제약).
+      // 여기도 LLM 판단엔 title/author/description만 필요해서 나머지 필드는 잘라낸다.
+      const toPromptCandidate = (c: SimilarBookResult) => ({
+        title: c.title,
+        author: c.author,
+        description: c.description,
+      });
       const aiResult = await this.aiService.generateTasteBasedRecommendations(
         formattedBooks,
-        similarBooks,
+        familiarCandidates.map(toPromptCandidate),
+        challengeCandidates.map(toPromptCandidate),
       );
 
       // 후보 목록에 이미 isbn·설명·이미지가 다 있으므로, LLM이 고른 제목을
       // 후보와 대조하기만 하면 됨 — 네이버 재검증이 필요 없음.
       const resolveBooks = (
         books: AIResponseBook[],
+        candidates: SimilarBookResult[],
       ): FinalRecommendedBook[] => {
         if (!books || !Array.isArray(books)) return [];
 
         return books
           .map((aiBook) => {
-            const matched = similarBooks.find(
+            const matched = candidates.find(
               (candidate) => candidate.title === aiBook.title,
             );
             if (!matched) {
@@ -175,8 +202,14 @@ export class AirecommendService {
           .filter((item): item is FinalRecommendedBook => item !== null);
       };
 
-      const familiarBooks = resolveBooks(aiResult?.familiarBooks);
-      const challengeBooks = resolveBooks(aiResult?.challengeBooks);
+      const familiarBooks = resolveBooks(
+        aiResult?.familiarBooks,
+        familiarCandidates,
+      );
+      const challengeBooks = resolveBooks(
+        aiResult?.challengeBooks,
+        challengeCandidates,
+      );
 
       await this.recommendationLogService.logShown(
         userId,
