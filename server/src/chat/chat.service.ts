@@ -208,17 +208,32 @@ export class ChatService {
     });
 
     try {
-      const relatedBooks = await this.retrieveRelatedBooks(dto.message, userId);
-      const context = this.buildContext(relatedBooks);
-      const recommendedBooks = relatedBooks.filter((b) => !b.isOwned);
-
-      // 클라이언트가 보낸 값이 아니라, DB에 저장된 히스토리를 직접 조회
+      // 클라이언트가 보낸 값이 아니라, DB에 저장된 히스토리를 직접 조회.
+      // 검색용 질문 재작성에 필요해서 검색(retrieveRelatedBooks)보다 먼저 가져온다.
       const recentMessages = await this.prisma.chatMessage.findMany({
         where: { roomId },
         orderBy: { createdAt: 'desc' },
         take: this.HISTORY_LIMIT,
       });
       const history = recentMessages.reverse();
+
+      // "그거 말고 또 있어?" 같은 맥락 의존 메시지를 대화 히스토리 기반으로
+      // 검색 가능한 독립적인 질문으로 재작성 — 이 재작성 결과는 검색에만
+      // 쓰고, 실제 대화 기록·LLM 컨텍스트는 원본 dto.message 그대로 둔다.
+      const retrievalQuery = await this.aiService.rewriteQueryForRetrieval(
+        history.map((h) => ({
+          role: h.role as 'user' | 'assistant',
+          content: h.content,
+        })),
+        dto.message,
+      );
+
+      const relatedBooks = await this.retrieveRelatedBooks(
+        retrievalQuery,
+        userId,
+      );
+      const context = this.buildContext(relatedBooks);
+      const recommendedBooks = relatedBooks.filter((b) => !b.isOwned);
 
       if (history.length === 0) {
         await this.prisma.chatRoom.update({

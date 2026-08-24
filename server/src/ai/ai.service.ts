@@ -324,6 +324,60 @@ export class AiService {
     }
   }
 
+  // 채팅 검색(RAG)용 질문 재작성. "그거 말고 또 있어?" 같은 메시지는 그
+  // 자체를 임베딩해봤자 의미 정보가 거의 없어서 검색이 안 됨 — 직전 대화
+  // 맥락을 참고해 "SF 소설 다른 것도 추천해줘"처럼 그 자체로 이해 가능한
+  // 질문으로 바꿔서, 그 결과를 검색(임베딩)에만 쓴다. 실제 대화 기록·LLM에게
+  // 보여주는 대화 내용(messages)은 원본 그대로 유지 — 여긴 검색 단계
+  // 전용이라 사용자가 실제로 뭐라고 썼는지를 바꿔치기하면 안 됨.
+  async rewriteQueryForRetrieval(
+    history: ChatTurn[],
+    currentMessage: string,
+  ): Promise<string> {
+    // 히스토리가 없으면(첫 메시지) 대명사가 가리킬 맥락 자체가 없으므로
+    // 재작성 LLM 호출 없이 바로 반환 — 첫 메시지 지연도 안 생김.
+    if (history.length === 0) return currentMessage;
+
+    try {
+      const model = this.genAI.getGenerativeModel({
+        model: MODEL,
+        systemInstruction: `당신은 대화 맥락을 참고해 사용자의 마지막 메시지를 "검색에 적합한, 그 자체로 완전히 이해 가능한 질문"으로 다시 쓰는 도우미입니다.
+
+- 마지막 메시지가 이전 대화의 대명사·생략된 주어("그거", "그 책", "또 다른 건")에 의존한다면, 이전 대화에서 그게 뭘 가리키는지 찾아 완전한 문장으로 풀어 쓰세요.
+- 이미 그 자체로 독립적인 질문이면 그대로 반환하세요.
+- 질문의 의미를 바꾸거나 새로운 내용을 추가하지 마세요 — 대명사·생략을 구체화하는 것뿐입니다.
+- 반드시 아래 JSON 형식으로만 응답하세요.
+
+{ "rewrittenQuery": "재작성된 질문 문장" }`,
+        generationConfig: noThinking({
+          temperature: 0,
+          responseMimeType: 'application/json',
+        }),
+      });
+
+      const historyText = history
+        .map((h) => `${h.role === 'user' ? '사용자' : 'AI'}: ${h.content}`)
+        .join('\n');
+
+      const result = await model.generateContent(`
+        [최근 대화]
+        ${historyText}
+
+        [마지막 사용자 메시지]: ${currentMessage}
+      `);
+
+      const raw = result.response.text();
+      if (!raw) throw new Error('No content returned');
+
+      const parsed = JSON.parse(raw) as { rewrittenQuery?: string };
+      return parsed.rewrittenQuery?.trim() || currentMessage;
+    } catch (error) {
+      // 재작성이 실패해도 검색 자체를 막으면 안 되므로 원래 메시지로 폴백.
+      console.error('[Query Rewrite Error]', error);
+      return currentMessage;
+    }
+  }
+
   async generateStreamCompletion(
     messages: ChatTurn[],
     systemInstruction: string,
