@@ -26,6 +26,15 @@ interface RelatedBook {
 export class ChatService {
   private readonly HISTORY_LIMIT = 12;
   private readonly RECOMMEND_CANDIDATE_LIMIT = 5;
+  // pgvector 코사인 거리(<=>, 0=완전 동일~2=정반대) 컷오프. 이 값 이하만
+  // "내 책장 정보"로 프롬프트에 넣는다 — 없으면 질문과 하나도 안 가까운
+  // 책도 "가장 가까운 5권"이라는 이유로 매번 컨텍스트에 끼어들어 답변을
+  // 흐림. gemini-embedding-001로 실제 검증(로컬 DB, 책 1000여 권 기준):
+  // 실제 관련 있는 질문("마법사 학교 다니는 소년 판타지 추천해줘")은 상위
+  // 10개가 0.345~0.37에 몰림. 책과 무관한 질문("비밀번호 어떻게 바꿔?")은
+  // 가장 가까운 책조차 0.39부터 시작해서 급격히 멀어짐. 그 사이인 0.38을
+  // 컷오프로 둠 — 표본이 질문 2개뿐이라 추후 실사용 로그로 재검증 필요.
+  private readonly RETRIEVAL_MAX_DISTANCE = 0.38;
 
   constructor(
     private readonly aiService: AiService,
@@ -78,6 +87,7 @@ export class ChatService {
   JOIN "Book" b ON b.id = best."bookId"
   LEFT JOIN "Bookshelf" bs
     ON bs."bookId" = best."bookId" AND bs."userId" = ${userId}
+  WHERE best.distance <= ${this.RETRIEVAL_MAX_DISTANCE}
   ORDER BY best.distance
   LIMIT 5
 `;
